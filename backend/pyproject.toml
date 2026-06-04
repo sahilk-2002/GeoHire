@@ -1,0 +1,26 @@
+[project]
+name = "geohire-backend"
+version = "0.1.0"
+description = "GeoHire location-based job discovery API"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "beautifulsoup4>=4.14.3",
+    "fastapi[standard]>=0.136.3",
+    "httpx>=0.28.1",
+    "lxml>=6.1.1",
+    "uvicorn>=0.49.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.4.0",
+]
+
+[tool.uv]
+dev-dependencies = ["pytest", "pytest-asyncio", "httpx"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

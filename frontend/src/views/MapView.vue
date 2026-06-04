@@ -9,17 +9,19 @@
       <div class="absolute inset-0 map-gradient-overlay pointer-events-none"></div>
     </div>
 
-    <!-- Floating search box -->
-    <div class="absolute top-4 left-4 right-4 lg:left-6 lg:right-6 z-30 max-w-md">
-      <div class="relative flex items-center bg-white shadow-xl rounded-full border border-outline-variant/30">
-        <span class="material-symbols-outlined absolute left-4 text-on-surface-variant">search</span>
-        <input v-model="searchQuery" @keyup.enter="searchLocation"
-          class="w-full h-12 pl-12 pr-12 bg-transparent rounded-full text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-          placeholder="Search location..." type="text" />
-        <button v-if="searchQuery" @click="searchQuery = ''; clearResults()"
-          class="absolute right-1 text-on-surface-variant p-2 hover:bg-surface-container-high rounded-full transition-colors">
-          <span class="material-symbols-outlined">close</span>
-        </button>
+    <!-- Header with search -->
+    <div class="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-background/95 to-background/0 pb-6">
+      <div class="px-container-margin lg:px-6 pt-3 lg:pt-4">
+        <div class="relative flex items-center max-w-2xl">
+          <span class="material-symbols-outlined absolute left-3 text-on-surface-variant">search</span>
+          <input v-model="searchQuery" @keyup.enter="searchLocation"
+            class="w-full h-11 pl-10 pr-10 bg-surface-container border border-outline-variant rounded-full text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+            placeholder="Search location..." type="text" />
+          <button v-if="searchQuery" @click="searchQuery = ''; clearResults()"
+            class="absolute right-1 text-on-surface-variant p-2 hover:bg-surface-container-high rounded-full transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
       </div>
     </div>
 

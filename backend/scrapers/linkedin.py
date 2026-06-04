@@ -3,6 +3,7 @@ import logging
 import time
 import random
 import uuid
+from urllib.parse import urlencode
 from typing import Optional
 
 import httpx
@@ -21,8 +22,8 @@ DETAIL_URL = "https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{job_id}"
 
 
 def _build_search_url(location: str, query: str = "", start: int = 0) -> str:
-    params = f"?keywords={query}&location={location}&start={start}"
-    return SEARCH_URL + params
+    params = urlencode({"keywords": query, "location": location, "start": start})
+    return f"{SEARCH_URL}?{params}"
 
 
 def _parse_search_results(html: str) -> list[dict]:

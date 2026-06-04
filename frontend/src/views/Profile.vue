@@ -40,6 +40,37 @@
       </div>
     </section>
 
+    <section class="mt-lg lg:mt-10">
+      <h2 class="font-headline-sm text-headline-sm mb-4">My Home</h2>
+      <div class="bg-white border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+        <div class="relative" style="height: 250px;">
+          <l-map ref="homeMapRef" :zoom="homeZoom" :center="homeCenter" :useGlobalLeaflet="false" :options="{ zoomControl: false }"
+            @ready="onHomeMapReady"
+            style="height: 100%; width: 100%;">
+            <l-tile-layer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>" />
+            <l-marker v-if="homeLat != null" :lat-lng="[homeLat, homeLng]" :icon="homeIcon" />
+          </l-map>
+        </div>
+        <div class="p-4 lg:p-5">
+          <p v-if="homeLat != null" class="text-sm text-on-surface-variant mb-3">
+            Home: {{ homeLat.toFixed(4) }}, {{ homeLng.toFixed(4) }}
+          </p>
+          <p v-else class="text-sm text-on-surface-variant mb-3">
+            Click on the map above to drop a pin at your home location.
+          </p>
+          <div class="flex items-center gap-3">
+            <button @click="saveHome"
+              :disabled="homeLat == null || (homeLat === resumeStore.homeLatitude && homeLng === resumeStore.homeLongitude)"
+              class="bg-primary text-on-primary px-5 py-2 rounded-lg font-label-md text-sm hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
+              {{ resumeStore.homeLatitude != null ? 'Update' : 'Save' }} Home
+            </button>
+            <button v-if="resumeStore.homeLatitude != null" @click="removeHome" class="text-error text-sm hover:underline">Remove</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="mt-lg lg:mt-10 mb-8">
       <h2 class="font-headline-sm text-headline-sm mb-4">Bookmarked Jobs</h2>
       <div v-if="bookmarkedJobs.length" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -59,9 +90,11 @@
 </template>
 
 <script setup>
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useResumeStore } from '../stores/resume'
 import { useJobsStore } from '../stores/jobs'
+import { LMap, LTileLayer, LMarker } from '@vue-leaflet/vue-leaflet'
+import L from 'leaflet'
 
 const resumeStore = useResumeStore()
 const jobsStore = useJobsStore()
@@ -71,6 +104,23 @@ const form = reactive({
   experience_years: null,
   job_title_keywords: '',
   summary: '',
+})
+
+const homeMapRef = ref(null)
+const homeLat = ref(resumeStore.homeLatitude)
+const homeLng = ref(resumeStore.homeLongitude)
+const homeZoom = ref(resumeStore.homeLatitude != null ? 11 : 4)
+const homeCenter = ref(
+  resumeStore.homeLatitude != null
+    ? [resumeStore.homeLatitude, resumeStore.homeLongitude]
+    : [20, 78]
+)
+
+const homeIcon = L.divIcon({
+  html: '<span class="material-symbols-outlined text-3xl" style="color:#dc2626;filter:drop-shadow(0 0 4px rgba(0,0,0,0.5))">home_pin</span>',
+  className: '',
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
 })
 
 watch(() => resumeStore.profile, (p) => {
@@ -93,6 +143,25 @@ function saveProfile() {
     job_title_keywords: form.job_title_keywords.split(',').map(s => s.trim()).filter(Boolean),
     summary: form.summary,
   })
+}
+
+function onHomeMapReady(map) {
+  map.on('click', (e) => {
+    homeLat.value = e.latlng.lat
+    homeLng.value = e.latlng.lng
+  })
+}
+
+function saveHome() {
+  if (homeLat.value != null) {
+    resumeStore.setHomeLocation(homeLat.value, homeLng.value)
+  }
+}
+
+function removeHome() {
+  homeLat.value = null
+  homeLng.value = null
+  resumeStore.setHomeLocation(null, null)
 }
 
 const bookmarkedJobs = computed(() => {

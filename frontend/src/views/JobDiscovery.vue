@@ -49,10 +49,12 @@
       <div v-if="!jobsStore.jobs.length && !jobsStore.matches.length && !jobsStore.loading && !jobsStore.location" class="text-center py-16 lg:py-24 px-4">
         <span class="material-symbols-outlined text-6xl text-primary mb-8 block">explore</span>
         <h2 class="font-headline-md text-headline-md lg:text-[28px] text-on-surface mb-4">Find Your Next Role</h2>
-        <p class="text-lg text-on-surface-variant max-w-2xl mx-auto mb-10 leading-8">Search for a location above to discover jobs, or upload your resume to get personalized matches.</p>
-        <div class="flex flex-col sm:flex-row gap-md justify-center">
+        <p class="text-lg text-on-surface-variant max-w-2xl mx-auto mb-10 leading-8">
+          <template v-if="resumeStore.profile">Your resume is ready. Search a location above to discover jobs matched to your profile.</template>
+          <template v-else>Search for a location above to discover jobs, or upload your resume to get personalized matches.</template>
+        </p>
+        <div v-if="!resumeStore.profile" class="flex flex-col sm:flex-row gap-md justify-center">
           <router-link to="/upload" class="bg-primary text-on-primary px-6 py-3 rounded-lg font-label-md inline-block">Upload Resume</router-link>
-          
         </div>
       </div>
 

@@ -3,7 +3,7 @@
     <l-map ref="mapRef" :zoom="zoom" :center="center" :useGlobalLeaflet="false" :options="mapOptions"
       @ready="onMapReady"
       @update:center="emitCenter" @update:zoom="emitZoom"
-      style="height: 100%; width: 100%; cursor: default;">
+      style="height: 100%; width: 100%;">
       <l-tile-layer :url="tileUrl" :attribution="attribution" />
       <MapPin v-for="job in jobs" :key="job.id" :job="job" @pin-click="(j) => $emit('pin-click', j)" />
     </l-map>
@@ -40,7 +40,19 @@ const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">Op
 watch(() => props.cleared, () => { removeRect() })
 
 watch(() => props.drawActive, (active) => {
-  if (!active) removeRect()
+  if (!leafletMap) return
+  if (active) {
+    leafletMap.dragging.disable()
+    leafletMap.doubleClickZoom.disable()
+    leafletMap.boxZoom.disable()
+    leafletMap.getContainer().style.cursor = 'crosshair'
+  } else {
+    leafletMap.dragging.enable()
+    leafletMap.doubleClickZoom.enable()
+    leafletMap.boxZoom.enable()
+    leafletMap.getContainer().style.cursor = ''
+    removeRect()
+  }
 })
 
 function onMapReady(map) {
@@ -63,7 +75,7 @@ function removeRect() {
 }
 
 function onMouseDown(e) {
-  if (!props.drawActive) return
+  if (!props.drawActive || !leafletMap) return
   removeRect()
   startLatLng = e.latlng
   tempRect = L.rectangle(L.latLngBounds(startLatLng, startLatLng), {
@@ -78,9 +90,9 @@ function onMouseMove(e) {
 }
 
 function onMouseUp() {
-  if (!tempRect || !startLatLng) return
+  if (!tempRect || !startLatLng || !leafletMap) return
   const bounds = tempRect.getBounds()
-  leafletMap?.removeLayer(tempRect)
+  leafletMap.removeLayer(tempRect)
   tempRect = null
   rectangle = L.rectangle(bounds, {
     color: '#4f46e5', weight: 2, fillOpacity: 0.15,

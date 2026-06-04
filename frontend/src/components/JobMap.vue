@@ -1,6 +1,6 @@
 <template>
   <div class="h-full w-full rounded-2xl overflow-hidden shadow-lg border border-outline-variant relative">
-    <l-map :zoom="zoom" :center="center" @update:center="emitCenter" @update:zoom="emitZoom" style="height: 100%; width: 100%;">
+    <l-map :zoom="zoom" :center="center" :useGlobalLeaflet="false" @update:center="emitCenter" @update:zoom="emitZoom" style="height: 100%; width: 100%;">
       <l-tile-layer :url="tileUrl" :attribution="attribution" />
       <MapPin v-for="job in jobs" :key="job.id" :job="job" @pin-click="(j) => $emit('pin-click', j)" />
     </l-map>

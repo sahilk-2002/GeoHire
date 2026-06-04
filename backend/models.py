@@ -28,3 +28,15 @@ class ScrapeResponse(BaseModel):
     location: str
     jobs: list[Job]
     message: str = "Scraping complete"
+
+
+class ResumeProfile(BaseModel):
+    skills: list[str] = Field(default_factory=list)
+    experience_years: Optional[float] = None
+    job_title_keywords: list[str] = Field(default_factory=list)
+    summary: Optional[str] = None
+
+
+class ResumeUploadResponse(BaseModel):
+    id: str
+    profile: ResumeProfile

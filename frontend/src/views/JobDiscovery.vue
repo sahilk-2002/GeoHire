@@ -6,16 +6,7 @@
           <span class="material-symbols-outlined text-primary">explore</span>
           <h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">GeoHire</h1>
         </div>
-        <div class="flex items-center gap-3 ml-auto">
-          <button class="relative p-2 hover:bg-surface-container-high rounded-full transition-colors">
-            <span class="material-symbols-outlined text-on-surface-variant">notifications</span>
-          </button>
-          <router-link to="/upload"
-            class="hidden lg:inline-flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity">
-            <span class="material-symbols-outlined text-sm">upload_file</span>
-            Upload Resume
-          </router-link>
-        </div>
+
       </div>
     </header>
 

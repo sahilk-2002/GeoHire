@@ -16,9 +16,12 @@ from scrapers.linkedin import search_linkedin
 from scrapers.freeapi import search_careernest, search_arbeitnow
 from cache import get_cached_jobs, save_jobs
 
+load_dotenv(find_dotenv())
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
+# --- Config from .env ---
 AI_API_KEY = os.getenv("OPENCODE_ZEN_API_KEY", "")
 _raw_base_url = os.getenv("OPENCODE_ZEN_API_BASE_URL", "https://opencode.ai/zen/v1")
 AI_BASE_URL = _raw_base_url.replace("/chat/completions", "").rstrip("/")
@@ -222,6 +225,126 @@ def get_jobs(location: str = Query(..., description="City and state, e.g. 'Pune,
     return JobListResponse(location=location, jobs=jobs, cached=True)
 
 
+def _extract_text_from_pdf(content: bytes) -> str:
+    from PyPDF2 import PdfReader
+    reader = PdfReader(io.BytesIO(content))
+    texts = []
+    for p in reader.pages:
+        t = p.extract_text()
+        if t and t.strip():
+            texts.append(t.strip())
+    result = "\n".join(texts)
+    logger.info("Extracted %d chars from %d PDF pages", len(result), len(reader.pages))
+    if not result:
+        logger.warning("PDF extraction yielded no text — file may be scanned/image-only")
+    return result
+
+
+def _extract_text_from_docx(content: bytes) -> str:
+    from docx import Document
+    doc = Document(io.BytesIO(content))
+    return "\n".join(p.text for p in doc.paragraphs)
+
+
+def _extract_text(file: UploadFile) -> str:
+    content = file.file.read()
+    if file.filename and file.filename.endswith(".pdf"):
+        return _extract_text_from_pdf(content)
+    elif file.filename and file.filename.endswith(".docx"):
+        return _extract_text_from_docx(content)
+    else:
+        content_type = file.content_type or ""
+        if "pdf" in content_type:
+            return _extract_text_from_pdf(content)
+        elif "word" in content_type or "docx" in content_type or "officedocument" in content_type:
+            return _extract_text_from_docx(content)
+        raise HTTPException(status_code=400, detail="Unsupported file type. Upload a PDF or DOCX file.")
+
+
+def _parse_resume_with_ai(text: str) -> ResumeProfile:
+    if not AI_API_KEY or AI_API_KEY == "***":
+        raise HTTPException(
+            status_code=500,
+            detail="OPENCODE_ZEN_API_KEY not configured in backend/.env. "
+                   "Set it to your OpenCode Zen API key and restart the server.",
+        )
+
+    client = OpenAI(
+        api_key=AI_API_KEY,
+        base_url=AI_BASE_URL,
+    )
+
+    prompt = (
+        "You are a resume parser. Extract structured information from the resume text below. "
+        "Respond with valid JSON only (no markdown, no code fences) in this exact format:\n"
+        "{\n"
+        '  "skills": ["skill1", "skill2", ...],\n'
+        '  "experience_years": <number or null>,\n'
+        '  "job_title_keywords": ["keyword1", "keyword2", ...],\n'
+        '  "summary": "brief one-line summary of the candidate profile"\n'
+        "}\n\n"
+        "- skills: extract technical and soft skills explicitly mentioned.\n"
+        "- experience_years: total years of professional experience; use null if unclear.\n"
+        "- job_title_keywords: 3-5 key job title words/phrases suitable for a job search query (e.g. 'software engineer', 'product manager', 'data scientist').\n"
+        "- summary: one sentence describing the candidate's seniority and primary domain.\n\n"
+        f"---RESUME TEXT (truncated to ~2048 tokens)---\n{text[:8000]}"
+    )
+
+    response = client.chat.completions.create(
+        model=AI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a precise resume parser. Output only JSON."},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.1,
+        max_tokens=8192,
+    )
+
+    msg = response.choices[0].message
+    finish = response.choices[0].finish_reason
+    if not msg.content or not msg.content.strip():
+        hint = " (max_tokens too low)" if finish == "length" else ""
+        logger.warning("AI returned empty response (finish_reason=%s)%s", finish, hint)
+        raise HTTPException(status_code=502, detail=f"AI parser returned empty response; finish_reason={finish}{hint}")
+
+    raw = msg.content.strip()
+    raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+
+    data = None
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        import re
+        m = re.search(r"\{.*\}", raw, re.DOTALL)
+        if m:
+            try:
+                data = json.loads(m.group())
+            except json.JSONDecodeError:
+                pass
+
+    if data is None:
+        logger.error("AI returned invalid JSON (finish_reason=%s): %.500s", response.choices[0].finish_reason, raw)
+        raise HTTPException(status_code=502, detail="AI parser returned malformed response")
+
+    profile = ResumeProfile(
+        skills=data.get("skills", []),
+        experience_years=data.get("experience_years"),
+        job_title_keywords=data.get("job_title_keywords", []),
+        summary=data.get("summary"),
+    )
+    logger.info("AI parsed resume -> %s", profile.model_dump_json())
+    return profile
+
+
+@app.post("/upload-resume", response_model=ResumeUploadResponse)
+def upload_resume(file: UploadFile = File(...)):
+    resume_id = str(uuid.uuid4())
+    text = _extract_text(file)
+    logger.info("Extracted resume text (first 500 chars): %.500s", text)
+    if len(text) > 500:
+        logger.info("Extracted resume text (chars 500-1000): %.500s", text[500:1000])
+    profile = _parse_resume_with_ai(text)
+    return ResumeUploadResponse(id=resume_id, profile=profile)
 @app.post("/match-jobs")
 def match_jobs(
     resume_id: str = Query(..., description="Resume ID from /upload-resume"),

@@ -6,13 +6,7 @@
           <span class="material-symbols-outlined text-primary">explore</span>
           <span class="font-headline-md text-headline-md font-bold text-primary">GeoHire</span>
         </div>
-        <h2 class="hidden lg:block font-headline-sm text-headline-sm text-on-surface">Map View</h2>
-        <div class="flex items-center gap-3">
-          <router-link to="/upload"
-            class="text-primary font-label-md text-label-md hover:opacity-80 transition-opacity">
-            Upload Resume
-          </router-link>
-        </div>
+
       </div>
       <div class="px-container-margin lg:px-6 pb-3 lg:pb-4 max-w-2xl">
         <div class="relative flex items-center">
@@ -30,8 +24,10 @@
 
     <main class="flex-1 relative">
       <div class="absolute inset-0 z-0">
-        <JobMap :jobs="mapJobs" :center="mapStore.center" :zoom="mapStore.zoom"
-          @update:center="onCenterChange" @update:zoom="onZoomChange" @pin-click="onPinClick" />
+        <JobMap :jobs="filteredJobs" :center="mapStore.center" :zoom="mapStore.zoom"
+          :draw-active="drawActive" :cleared="clearedCount"
+          @update:center="onCenterChange" @update:zoom="onZoomChange" @pin-click="onPinClick"
+          @area-drawn="onAreaDrawn" />
         <div class="absolute inset-0 map-gradient-overlay pointer-events-none"></div>
       </div>
 
@@ -71,14 +67,25 @@
         </div>
       </div>
 
-      <div class="absolute right-4 lg:right-6 top-4 lg:top-6 flex flex-col gap-2 z-30">
-        <button class="w-11 h-11 rounded-full bg-white shadow-lg flex items-center justify-center text-primary active:scale-90 transition-transform hover:bg-surface-container-low border border-outline-variant/30">
-          <span class="material-symbols-outlined text-lg">filter_list</span>
-        </button>
-        <button @click="recenter"
-          class="w-11 h-11 rounded-full bg-primary text-on-primary shadow-lg flex items-center justify-center active:scale-90 transition-transform hover:opacity-90">
-          <span class="material-symbols-outlined text-lg">my_location</span>
-        </button>
+      <div class="absolute right-4 lg:right-6 z-30" :class="drawActive ? 'top-32' : 'top-4 lg:top-6'">
+        <div v-if="drawActive" class="mb-2 px-3 py-1.5 bg-primary text-on-primary text-xs rounded-full shadow-lg text-center whitespace-nowrap">
+          Click & drag to select area
+        </div>
+        <div class="flex flex-col gap-2">
+          <button @click="drawActive = !drawActive"
+            class="w-11 h-11 rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-transform"
+            :class="drawActive ? 'bg-primary text-on-primary' : 'bg-white text-primary border border-outline-variant/30 hover:bg-surface-container-low'">
+            <span class="material-symbols-outlined text-lg">crop_square</span>
+          </button>
+          <button v-if="areaBounds" @click="clearArea"
+            class="w-11 h-11 rounded-full bg-white shadow-lg flex items-center justify-center text-error active:scale-90 transition-transform hover:bg-surface-container-low border border-outline-variant/30">
+            <span class="material-symbols-outlined text-lg">close</span>
+          </button>
+          <button @click="recenter"
+            class="w-11 h-11 rounded-full bg-primary text-on-primary shadow-lg flex items-center justify-center active:scale-90 transition-transform hover:opacity-90">
+            <span class="material-symbols-outlined text-lg">my_location</span>
+          </button>
+        </div>
       </div>
 
       <!-- Mobile slide-up card -->
@@ -108,7 +115,7 @@
       </div>
 
       <!-- Desktop side panel -->
-      <div v-if="selectedJob" class="hidden lg:block absolute top-4 left-4 w-80 z-30 max-h-[calc(100%-2rem)] overflow-y-auto">
+      <div v-if="selectedJob" class="hidden lg:block absolute top-24 left-4 w-80 z-30 max-h-[calc(100%-8rem)] overflow-y-auto">
         <div class="bg-surface-container-lowest rounded-xl shadow-xl border border-outline-variant p-5">
           <div class="flex justify-between items-start mb-4">
             <div class="w-14 h-14 rounded-lg bg-surface-container flex items-center justify-center">
@@ -145,8 +152,20 @@ const jobsStore = useJobsStore()
 const searchQuery = ref('')
 const selectedJob = ref(null)
 const searched = ref(false)
+const drawActive = ref(false)
+const areaBounds = ref(null)
+const clearedCount = ref(0)
 
 const mapJobs = computed(() => jobsStore.jobs.filter(j => j.latitude && j.longitude))
+
+const filteredJobs = computed(() => {
+  if (!areaBounds.value) return mapJobs.value
+  const b = areaBounds.value
+  return mapJobs.value.filter(j =>
+    j.latitude >= b.south && j.latitude <= b.north &&
+    j.longitude >= b.west && j.longitude <= b.east
+  )
+})
 
 async function searchLocation() {
   if (!searchQuery.value) return
@@ -161,10 +180,21 @@ async function searchLocation() {
   }
 }
 
+function onAreaDrawn(bounds) {
+  areaBounds.value = bounds
+  drawActive.value = false
+}
+
+function clearArea() {
+  areaBounds.value = null
+  clearedCount.value++
+}
+
 function clearResults() {
   searched.value = false
   jobsStore.jobs = []
   jobsStore.error = ''
+  clearArea()
 }
 
 function loadMock() {

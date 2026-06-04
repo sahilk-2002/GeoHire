@@ -7,9 +7,31 @@
     <section class="mt-lg lg:mt-8">
       <h2 class="font-headline-sm text-headline-sm mb-4">Your Resume</h2>
       <div v-if="resumeStore.profile" class="bg-white border border-outline-variant p-5 lg:p-6 rounded-xl shadow-sm">
-        <p class="text-body-sm text-on-surface-variant mb-sm">Skills: {{ resumeStore.profile.skills?.join(', ') }}</p>
-        <p v-if="resumeStore.profile.experience_years" class="text-body-sm text-on-surface-variant mb-sm">Experience: {{ resumeStore.profile.experience_years }} years</p>
-        <button @click="resumeStore.clear()" class="text-error text-label-sm mt-3 hover:underline">Remove Resume</button>
+        <div class="mb-4">
+          <label class="text-label-sm text-outline block mb-1">Skills</label>
+          <input v-model="form.skills" type="text"
+            class="w-full border border-outline-variant rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+        </div>
+        <div class="mb-4">
+          <label class="text-label-sm text-outline block mb-1">Experience (years)</label>
+          <input v-model.number="form.experience_years" type="number" min="0" step="0.5"
+            class="w-full border border-outline-variant rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+        </div>
+        <div class="mb-4">
+          <label class="text-label-sm text-outline block mb-1">Job Title Keywords</label>
+          <input v-model="form.job_title_keywords" type="text"
+            class="w-full border border-outline-variant rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+        </div>
+        <div class="mb-4">
+          <label class="text-label-sm text-outline block mb-1">Summary</label>
+          <textarea v-model="form.summary" rows="3"
+            class="w-full border border-outline-variant rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"></textarea>
+        </div>
+        <div class="flex items-center gap-3">
+          <button @click="saveProfile" class="bg-primary text-on-primary px-5 py-2 rounded-lg font-label-md text-sm hover:opacity-90 transition-opacity">Save</button>
+          <button @click="resetForm" class="text-on-surface-variant text-sm hover:underline">Reset</button>
+          <button @click="resumeStore.clear()" class="text-error text-sm ml-auto hover:underline">Remove Resume</button>
+        </div>
       </div>
       <div v-else class="bg-white border border-outline-variant p-8 lg:p-10 rounded-xl shadow-sm text-center text-on-surface-variant">
         <span class="material-symbols-outlined text-5xl text-outline mb-4 block">description</span>
@@ -37,12 +59,41 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { useResumeStore } from '../stores/resume'
 import { useJobsStore } from '../stores/jobs'
 
 const resumeStore = useResumeStore()
 const jobsStore = useJobsStore()
+
+const form = reactive({
+  skills: '',
+  experience_years: null,
+  job_title_keywords: '',
+  summary: '',
+})
+
+watch(() => resumeStore.profile, (p) => {
+  if (p) resetForm()
+}, { immediate: true })
+
+function resetForm() {
+  const p = resumeStore.profile
+  if (!p) return
+  form.skills = (p.skills || []).join(', ')
+  form.experience_years = p.experience_years ?? null
+  form.job_title_keywords = (p.job_title_keywords || []).join(', ')
+  form.summary = p.summary || ''
+}
+
+function saveProfile() {
+  resumeStore.updateProfile({
+    skills: form.skills.split(',').map(s => s.trim()).filter(Boolean),
+    experience_years: form.experience_years,
+    job_title_keywords: form.job_title_keywords.split(',').map(s => s.trim()).filter(Boolean),
+    summary: form.summary,
+  })
+}
 
 const bookmarkedJobs = computed(() => {
   const bookmarks = JSON.parse(localStorage.getItem('geohire_bookmarks') || '[]')

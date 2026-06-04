@@ -6,6 +6,7 @@ const routes = [
   { path: '/upload', name: 'ResumeUpload', component: () => import('../views/ResumeUpload.vue') },
   { path: '/map', name: 'MapView', component: () => import('../views/MapView.vue') },
   { path: '/profile', name: 'Profile', component: () => import('../views/Profile.vue') },
+  { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
 export default createRouter({ history: createWebHistory(), routes })

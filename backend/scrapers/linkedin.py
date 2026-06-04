@@ -45,7 +45,7 @@ def _parse_search_results(html: str) -> list[dict]:
             company_el = card.find("h4", class_="base-search-card--subtitle")
             company = company_el.get_text(strip=True) if company_el else "Unknown"
             location_el = card.find("span", class_="job-search-card__location")
-            job_location = location_el.get_text(strip=True) if location_el else location
+            job_location = location_el.get_text(strip=True) if location_el else ""
             time_el = card.find("time")
             posted_date = time_el.get("datetime") if time_el else None
             jobs.append({
@@ -126,7 +126,7 @@ def scrape_linkedin(
                     "company": result["company"],
                     "location": result["location"],
                     "description": detail.get("description", ""),
-                    "requirements": [detail["seniority"]] if detail.get("seniority") else [],
+                    "requirements": [],
                     "salary": detail.get("salary"),
                     "job_type": detail.get("job_type", "Full-time"),
                     "posted_date": result.get("posted_date"),

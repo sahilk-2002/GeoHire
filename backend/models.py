@@ -1,6 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime
 
 
 class Job(BaseModel):
@@ -9,7 +8,7 @@ class Job(BaseModel):
     company: str
     location: str
     description: str
-    requirements: list[str] = []
+    requirements: list[str] = Field(default_factory=list)
     salary: Optional[str] = None
     job_type: Optional[str] = None
     posted_date: Optional[str] = None

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>GeoHire - Map View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pin-pop:active {
+            transform: scale(0.9);
+        }
+        .map-gradient-overlay {
+            background: linear-gradient(180deg, rgba(248, 249, 255, 0.9) 0%, rgba(248, 249, 255, 0) 15%, rgba(248, 249, 255, 0) 85%, rgba(248, 249, 255, 0.9) 100%);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#f8f9ff",
+                        "tertiary": "#684000",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#dce9ff",
+                        "surface-variant": "#d3e4fe",
+                        "inverse-on-surface": "#eaf1ff",
+                        "primary": "#3525cd",
+                        "inverse-primary": "#c3c0ff",
+                        "inverse-surface": "#213145",
+                        "on-error-container": "#93000a",
+                        "on-background": "#0b1c30",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-tertiary-container": "#ffd4a4",
+                        "surface-bright": "#f8f9ff",
+                        "on-secondary-fixed-variant": "#005049",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "surface-container": "#e5eeff",
+                        "primary-container": "#4f46e5",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "tertiary-fixed": "#ffddb8",
+                        "surface-dim": "#cbdbf5",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f8f9ff",
+                        "on-surface": "#0b1c30",
+                        "secondary-container": "#86f2e4",
+                        "on-primary-container": "#dad7ff",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-surface-variant": "#464555",
+                        "primary-fixed": "#e2dfff",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "tertiary-container": "#885500",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#006a61",
+                        "secondary-fixed-dim": "#6bd8cb",
+                        "outline-variant": "#c7c4d8",
+                        "on-secondary-fixed": "#00201d",
+                        "outline": "#777587",
+                        "on-secondary": "#ffffff",
+                        "surface-tint": "#4d44e3",
+                        "surface-container-low": "#eff4ff",
+                        "secondary-fixed": "#89f5e7",
+                        "on-secondary-container": "#006f66",
+                        "on-primary-fixed": "#0f0069"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "container-margin": "16px",
+                        "base": "4px",
+                        "sm": "8px",
+                        "xl": "32px",
+                        "md": "16px",
+                        "xs": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["26px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen overflow-hidden">
+<!-- Top Navigation Bar -->
+<header class="w-full top-0 sticky bg-background z-40">
+<div class="flex items-center justify-between px-md py-sm w-full">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="explore">explore</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">GeoHire</span>
+</div>
+<div class="flex items-center gap-md">
+<button class="hover:opacity-80 transition-opacity flex items-center justify-center p-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+</button>
+</div>
+</div>
+<!-- Search Bar Overlay in Header Area -->
+<div class="px-md pb-sm">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant" data-icon="search">search</span>
+<input class="w-full h-11 pl-10 pr-4 bg-surface-container border border-outline-variant rounded-full text-body-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Search location..." type="text" value="San Francisco, CA"/>
+<span class="material-symbols-outlined absolute right-3 text-primary" data-icon="my_location">my_location</span>
+</div>
+</div>
+</header>
+<!-- Map Canvas Area -->
+<main class="relative h-[calc(100vh-140px)] w-full overflow-hidden bg-surface-dim">
+<!-- Interactive Map Background -->
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover opacity-60 grayscale-[20%]" data-alt="A high-resolution architectural map of a modern metropolitan downtown area with clean lines and soft blue tones. The lighting is bright and airy, reflecting a professional light-mode aesthetic. Delicate grid lines and subtle topographical details are visible, creating a sophisticated backdrop for interactive data visualization. The overall mood is technological and efficient." data-location="San Francisco" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlKmucuzgca3NLTCtdCp_N1zMqL0JqRsJtsF0MEFMjhmwfJyRRWmM60ocFsBqfh7Mbis0KhAisN3wGE02ezH9cDsRaN6w1mnp0KC0y_5ZdDtsePWVo9VPqCRpK-4CcfXQr1hZO9QjDuETjWpbdzvE4TZGo4g57AoAyzgHDu3Odb2FEE3ksdvrRMUI9WzvueNUvoSycIYy__pqwkSeFTpiI_H_SSBS_4jE3I8YiqbueeBhY1WHQJirf03OgssNccYCrNHy7fem3ynI"/>
+<div class="absolute inset-0 map-gradient-overlay pointer-events-none"></div>
+</div>
+<!-- Floating Action Buttons -->
+<div class="absolute right-md top-lg flex flex-col gap-sm z-30">
+<button class="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center text-primary active:scale-90 transition-transform hover:bg-surface-container-low">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+</button>
+<button class="w-12 h-12 rounded-full bg-primary text-on-primary shadow-lg flex items-center justify-center active:scale-90 transition-transform hover:opacity-90">
+<span class="material-symbols-outlined" data-icon="recenter">recenter</span>
+</button>
+</div>
+<!-- Interactive Map Pins -->
+<!-- Pin 1 -->
+<button class="absolute top-[30%] left-[25%] z-20 group" onclick="showCard('card1')">
+<div class="relative flex flex-col items-center">
+<div class="bg-primary text-on-primary px-3 py-1 rounded-full text-label-sm shadow-md mb-1 transition-transform group-hover:scale-110">
+                    $180k
+                </div>
+<span class="material-symbols-outlined text-primary text-3xl drop-shadow-md" data-icon="location_on" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+</button>
+<!-- Pin 2 -->
+<button class="absolute top-[45%] left-[60%] z-20 group" onclick="showCard('card2')">
+<div class="relative flex flex-col items-center">
+<div class="bg-secondary text-on-secondary px-3 py-1 rounded-full text-label-sm shadow-md mb-1 transition-transform group-hover:scale-110">
+                    $210k
+                </div>
+<span class="material-symbols-outlined text-secondary text-3xl drop-shadow-md" data-icon="location_on" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+</button>
+<!-- Pin 3 -->
+<button class="absolute top-[15%] left-[50%] z-20 group" onclick="showCard('card3')">
+<div class="relative flex flex-col items-center">
+<div class="bg-primary text-on-primary px-3 py-1 rounded-full text-label-sm shadow-md mb-1 transition-transform group-hover:scale-110">
+                    $155k
+                </div>
+<span class="material-symbols-outlined text-primary text-3xl drop-shadow-md" data-icon="location_on" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+</button>
+<!-- Job Card Overlay (Hidden by default, shown on pin click) -->
+<div class="absolute bottom-4 left-4 right-4 z-40 transform translate-y-[150%] transition-transform duration-300 ease-out" id="jobOverlay">
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-xl border border-outline-variant flex items-center gap-md" id="cardContent">
+<div class="w-14 h-14 rounded-lg bg-surface-container flex items-center justify-center overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A minimalist tech company logo design with clean geometric lines and a vibrant teal color accent. The icon is professionally framed against a soft grey architectural background, suggesting a modern corporate workspace that values innovation and clarity. The lighting is diffused and professional." id="jobImg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCL2nLTtHbC2xedCUkPMD0L6xGh9aEKweFqKbaJ86LFpof640LMHBpODCmeDJcn4zNtXTGw784fDFfvM4ocwHpbNBj51Av-9c9_R21XI2HjCCK5TqWGjVfaYuuMcqhaBMcxnUDabavHgZVtUideGVY5202r9C7yV0AWEEX6jRSoWb6MK5VkJ5W_VrwcZjIooXdOPEXZXzucNeRvX8UgBFHTtRFRwDl3p4-TotYrm9LOZzBTrn1-RJu7r_wCMnu-fifWw-04Pj3AjEc"/>
+</div>
+<div class="flex-grow min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-sm text-headline-sm text-on-surface truncate" id="jobTitle">Senior Product Designer</h3>
+<button class="text-outline hover:text-on-surface" onclick="hideCard()">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<p class="text-body-sm text-on-surface-variant" id="jobCompany">Stripe • Remote</p>
+<div class="mt-2 flex items-center justify-between">
+<span class="text-label-md text-primary" id="jobSalary">$180,000 - $220,000</span>
+<button class="bg-primary text-on-primary text-label-md px-4 py-1.5 rounded-lg active:scale-95 transition-transform">Apply Now</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] bg-surface">
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-full transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined" data-icon="work">work</span>
+<span class="font-label-sm text-label-sm">Jobs</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 duration-150">
+<span class="material-symbols-outlined" data-icon="map" style="font-variation-settings: 'FILL' 1;">map</span>
+<span class="font-label-sm text-label-sm">Map</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-full transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined" data-icon="upload_file">upload_file</span>
+<span class="font-label-sm text-label-sm">Upload</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-full transition-all active:scale-90 duration-150">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+<script>
+        const jobs = {
+            card1: {
+                title: "Senior Product Designer",
+                company: "Stripe • San Francisco",
+                salary: "$180,000 - $220,000",
+                img: "https://images.unsplash.com/photo-1549923746-c502d488b3ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
+            },
+            card2: {
+                title: "Engineering Manager",
+                company: "Airbnb • SoMa",
+                salary: "$210,000 - $250,000",
+                img: "https://images.unsplash.com/photo-1572021335469-3171624c602c?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
+            },
+            card3: {
+                title: "Fullstack Engineer",
+                company: "Discord • Mission District",
+                salary: "$155,000 - $190,000",
+                img: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
+            }
+        };
+
+        function showCard(id) {
+            const overlay = document.getElementById('jobOverlay');
+            const data = jobs[id];
+            
+            document.getElementById('jobTitle').innerText = data.title;
+            document.getElementById('jobCompany').innerText = data.company;
+            document.getElementById('jobSalary').innerText = data.salary;
+            document.getElementById('jobImg').src = data.img;
+
+            overlay.classList.remove('translate-y-[150%]');
+            overlay.classList.add('translate-y-0');
+        }
+
+        function hideCard() {
+            const overlay = document.getElementById('jobOverlay');
+            overlay.classList.add('translate-y-[150%]');
+            overlay.classList.remove('translate-y-0');
+        }
+
+        // Auto-show a card on load to demonstrate the UI
+        window.onload = () => {
+            setTimeout(() => showCard('card1'), 800);
+        };
+    </script>
+</body></html>

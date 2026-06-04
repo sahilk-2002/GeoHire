@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "background": "#f8f9ff",
+                    "tertiary": "#684000",
+                    "on-error": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#dce9ff",
+                    "surface-variant": "#d3e4fe",
+                    "inverse-on-surface": "#eaf1ff",
+                    "primary": "#3525cd",
+                    "inverse-primary": "#c3c0ff",
+                    "inverse-surface": "#213145",
+                    "on-error-container": "#93000a",
+                    "on-background": "#0b1c30",
+                    "on-tertiary-fixed": "#2a1700",
+                    "on-tertiary-container": "#ffd4a4",
+                    "surface-bright": "#f8f9ff",
+                    "on-secondary-fixed-variant": "#005049",
+                    "error": "#ba1a1a",
+                    "primary-fixed-dim": "#c3c0ff",
+                    "surface-container": "#e5eeff",
+                    "primary-container": "#4f46e5",
+                    "tertiary-fixed-dim": "#ffb95f",
+                    "tertiary-fixed": "#ffddb8",
+                    "surface-dim": "#cbdbf5",
+                    "on-tertiary": "#ffffff",
+                    "surface": "#f8f9ff",
+                    "on-surface": "#0b1c30",
+                    "secondary-container": "#86f2e4",
+                    "on-primary-container": "#dad7ff",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#653e00",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-surface-variant": "#464555",
+                    "primary-fixed": "#e2dfff",
+                    "on-primary-fixed-variant": "#3323cc",
+                    "tertiary-container": "#885500",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary": "#006a61",
+                    "secondary-fixed-dim": "#6bd8cb",
+                    "outline-variant": "#c7c4d8",
+                    "on-secondary-fixed": "#00201d",
+                    "outline": "#777587",
+                    "on-secondary": "#ffffff",
+                    "surface-tint": "#4d44e3",
+                    "surface-container-low": "#eff4ff",
+                    "secondary-fixed": "#89f5e7",
+                    "on-secondary-container": "#006f66",
+                    "on-primary-fixed": "#0f0069"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "lg": "24px",
+                    "container-margin": "16px",
+                    "base": "4px",
+                    "sm": "8px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "xs": "4px",
+                    "gutter": "12px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "headline-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["26px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-24">
+<!-- Top AppBar -->
+<header class="bg-background dark:bg-on-background w-full top-0 sticky z-40 transition-all duration-300">
+<div class="flex items-center justify-between px-md py-sm w-full max-w-5xl mx-auto">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim" data-icon="explore">explore</span>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary tracking-tight">GeoHire</h1>
+</div>
+<button class="hover:opacity-80 transition-opacity active:scale-95 transition-transform p-2">
+<span class="material-symbols-outlined text-on-surface-variant dark:text-outline-variant" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<main class="max-w-5xl mx-auto px-container-margin pt-sm">
+<!-- Search Section -->
+<section class="mb-lg">
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant p-4 flex flex-col md:flex-row gap-4">
+<div class="flex-1 flex items-center gap-3 bg-surface-container-low px-4 py-3 rounded-lg border border-transparent focus-within:border-primary transition-colors">
+<span class="material-symbols-outlined text-outline" data-icon="work">work</span>
+<input class="bg-transparent border-none focus:ring-0 w-full font-body-md text-on-surface placeholder:text-outline p-0" placeholder="Job title or keywords" type="text"/>
+</div>
+<div class="flex-1 flex items-center gap-3 bg-surface-container-low px-4 py-3 rounded-lg border border-transparent focus-within:border-primary transition-colors">
+<span class="material-symbols-outlined text-outline" data-icon="location_on">location_on</span>
+<input class="bg-transparent border-none focus:ring-0 w-full font-body-md text-on-surface placeholder:text-outline p-0" placeholder="Location" type="text"/>
+</div>
+<button class="bg-primary hover:opacity-90 text-on-primary px-8 py-3 rounded-lg font-label-md transition-all active:scale-95">
+                    Search
+                </button>
+</div>
+</section>
+<!-- View Toggle & Filters -->
+<section class="flex items-center justify-between mb-md">
+<div class="bg-surface-container-high p-1 rounded-full flex items-center">
+<button class="px-6 py-1.5 rounded-full font-label-sm transition-all duration-200 bg-secondary-container text-on-secondary-container shadow-sm" id="listViewBtn">
+                    List View
+                </button>
+<button class="px-6 py-1.5 rounded-full font-label-sm transition-all duration-200 text-on-surface-variant hover:bg-surface-variant" id="mapViewBtn">
+                    Map View
+                </button>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-full font-label-sm hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="tune">tune</span>
+                Filters
+            </button>
+</section>
+<!-- Content Area -->
+<div class="relative" id="contentArea">
+<!-- List View -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md transition-all duration-500 opacity-100" id="listView">
+<!-- Job Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container p-2 flex items-center justify-center overflow-hidden">
+<img alt="Stripe Logo" class="w-full h-full object-contain" data-alt="A clean, professional minimalist logo for a high-end financial technology company, centered in a soft gray square. The aesthetic is corporate yet modern, utilizing flat design principles with sharp edges and a sophisticated deep purple and white color scheme. Lighting is even and professional, suggesting trust and digital innovation in a bright, light-mode environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUvP6axUGcOmZK_GtQbaAc_elClqo7XOVSc6Ricdi09zdRjQWPg6RuxzXY_DAQEPojzLHgGB0u63pY_8Qa6ofC3dW9tDWPlBrEAREyRY12QZj67BZj8y9gzRK9RefaJGv6Ako6r7V4m6ygtj-q4xhVTlvTzOJHT7eRpWi8NjQJcsK2aVz_LRa1G0xZQLIjdtNLO-RhGSXs-cHHTpqWl6bXvnYyIbfz94AYSvygVKBI9MgXCUpaqFRN4nW5c3k8NHe8ZZkMAg7wdmg"/>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="bookmark">bookmark</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-1">Senior UX Designer</h3>
+<p class="font-body-md text-on-surface-variant mb-4">Stripe</p>
+<div class="flex flex-wrap gap-2 mb-6">
+<span class="px-2 py-1 bg-secondary-container/50 text-on-secondary-container text-[10px] font-bold rounded uppercase tracking-wider">Applied</span>
+<span class="px-2 py-1 bg-surface-container text-on-surface-variant text-[10px] font-bold rounded uppercase tracking-wider">Full-time</span>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-outline-variant">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+<span class="text-label-sm">San Francisco, CA</span>
+</div>
+<p class="text-label-sm font-semibold text-secondary">$140k – $180k</p>
+</div>
+</div>
+<!-- Job Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container p-2 flex items-center justify-center overflow-hidden">
+<img alt="Airbnb Logo" class="w-full h-full object-contain" data-alt="A vibrant and iconic brand logo for a global travel platform, presented with crisp resolution and vibrant colors. The visual style is friendly, modern, and high-energy, using a signature coral pink and white color palette. The image is set against a clean, minimalist white background to emphasize clarity and momentum in a professional digital interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvBk6bz125lJHczTHFeHif9jtEjD1p6GHcPaIBnkINdWuchV2y8U2cbDIFB0jubNDd9_DMsqhR2ip8gzDPvf1WxrzLsGgP24JKGGxhPSALMfAf8s3iFKNeP09kLpuG7gq_NyGYugTUNQkIE7XUTSG48KKWzQm6fGtwfBAxe6Hwojyx8utgFmsKPt6WnkJ5XRJOpXcOcDI4IlFR1iwWn6hR1vLzRxmCtkcCrAvHr9_rol247tJuvSFnN0x38aHmzgwb-xx6guS4aGQ"/>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="bookmark" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-1">Full Stack Developer</h3>
+<p class="font-body-md text-on-surface-variant mb-4">Airbnb</p>
+<div class="flex flex-wrap gap-2 mb-6">
+<span class="px-2 py-1 bg-tertiary/10 text-tertiary text-[10px] font-bold rounded uppercase tracking-wider">Hot Job</span>
+<span class="px-2 py-1 bg-surface-container text-on-surface-variant text-[10px] font-bold rounded uppercase tracking-wider">Remote</span>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-outline-variant">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+<span class="text-label-sm">New York, NY</span>
+</div>
+<p class="text-label-sm font-semibold text-secondary">$160k – $210k</p>
+</div>
+</div>
+<!-- Job Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container p-2 flex items-center justify-center overflow-hidden">
+<img alt="Google Logo" class="w-full h-full object-contain" data-alt="The world-renowned four-color brand logo for a leading technology corporation, rendered in a crisp, high-resolution flat vector style. The primary colors—red, yellow, green, and blue—are balanced perfectly against a stark white background. The mood is efficient, innovative, and familiar, fitting seamlessly into a high-end corporate digital ecosystem." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD60qa68GuVBYkrLJJq_L_tuZdl8RANezZcfnEVx9xe-n3p8Kz-TeFPSvxhweNLB_uZaTuJqw9BZeSVP6dcrwtyAgex_MB5SyC-ypRIed4_iTAblk_1xu4YkTabjnAReNzkpP1a_HrMurK_Cyk_1vyraIdzaZyulwxjyFCUi-eYsHB_bwH5Ygc8fEkD-eWoi98IG2hGubrrHGyca6aoNk_SVHFn92R_S9yjYAO3Xz9D5xpvtVKrnR9fI9ik4n1PVy0fiT6Rwt5dYoI"/>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="bookmark">bookmark</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-1">Product Manager</h3>
+<p class="font-body-md text-on-surface-variant mb-4">Google</p>
+<div class="flex flex-wrap gap-2 mb-6">
+<span class="px-2 py-1 bg-surface-container text-on-surface-variant text-[10px] font-bold rounded uppercase tracking-wider">Full-time</span>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-outline-variant">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+<span class="text-label-sm">Mountain View, CA</span>
+</div>
+<p class="text-label-sm font-semibold text-secondary">$180k – $240k</p>
+</div>
+</div>
+<!-- Job Card 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container p-2 flex items-center justify-center overflow-hidden">
+<img alt="Framer Logo" class="w-full h-full object-contain" data-alt="A modern, geometric logo for a design software company, featuring sharp blue and white abstract shapes. The design is sleek, tech-focused, and high-contrast, symbolizing momentum and creative agility. Set in a well-lit, minimalist environment, the logo reflects a premium digital experience with a focus on cutting-edge design tools." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkMHZ2FLmTQZce6oATXwzQDIntZvM0sD__6YS0hr2yUSuB4sihCW1HdjS6eIJHJkQ0DzqHdVPT196omR0t5bZZFHIbmDTb9XTOAKhZtq5tFslHXb9zSJBS0bufio7mppl7Bk0BuE8eFn6Ce0a1KHT4hhnUnCQhNOBKp5gx-buKCIHKuVYCMY5Sl4qvyx9Uc12pg6GnuLwO07M_TKh6N5cpiCxr2fjA0KkITKqXJqX14kp3JQQ0Ppb_deDLp2k_4SXxSS_mWytUaE0"/>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors" data-icon="bookmark">bookmark</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-1">Frontend Engineer</h3>
+<p class="font-body-md text-on-surface-variant mb-4">Framer</p>
+<div class="flex flex-wrap gap-2 mb-6">
+<span class="px-2 py-1 bg-surface-container text-on-surface-variant text-[10px] font-bold rounded uppercase tracking-wider">Contract</span>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-outline-variant">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+<span class="text-label-sm">Amsterdam, NL</span>
+</div>
+<p class="text-label-sm font-semibold text-secondary">$90k – $120k</p>
+</div>
+</div>
+</div>
+<!-- Map View (Hidden by default) -->
+<div class="hidden h-[600px] w-full rounded-2xl overflow-hidden shadow-lg border border-outline-variant relative transition-all duration-500 opacity-0 translate-y-4" id="mapView">
+<div class="absolute inset-0 bg-surface-container-high animate-pulse flex items-center justify-center" id="mapLoader">
+<span class="material-symbols-outlined text-primary text-4xl animate-spin" data-icon="progress_activity">progress_activity</span>
+</div>
+<!-- Mock Map Image -->
+<img class="w-full h-full object-cover grayscale opacity-60" data-alt="A highly detailed and minimalist digital map of San Francisco, showcasing city streets and harbor lines in a sophisticated monochromatic blue and gray palette. The map features soft glowing markers and elegant UI overlays indicating job opportunities. The overall mood is technological, efficient, and clean, perfectly suited for a high-end corporate job discovery platform." data-location="San Francisco" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYureGP-U9Fce4yNBDGE1wRU5bSy1K5IQJYE9DWV6uCnMJy8MomCpM68hvvJMqGBGRFQ_6d9OTajTjrZOMjEsLcvByk_L1AdgDm1BtNJZVoXnQo9kjE-H9o2RWpsfeN4w2_vLCF4DKN6QdQmYxAvREE-lQPhLaqjor-3IWvsTkULQ2P8bcG7eF1mQzV6K3yUwQBDPbDGLUcg4ubBix7xDHI0HaLB0UgBjrS4kaIpPIKQujgdTPmBeCOX1wMUPnegHHt-pt719kT1o"/>
+<!-- Floating Map Pin Cards -->
+<div class="absolute top-24 left-1/4 bg-surface-container-lowest p-2 rounded-lg shadow-xl border border-primary flex items-center gap-3 animate-bounce">
+<div class="w-8 h-8 rounded-md bg-primary-container flex items-center justify-center text-[10px] font-bold text-on-primary-container">ST</div>
+<div>
+<p class="text-xs font-bold leading-none">Senior UX</p>
+<p class="text-[10px] text-on-surface-variant">$160k</p>
+</div>
+</div>
+<div class="absolute bottom-1/3 right-1/3 bg-surface-container-lowest p-2 rounded-lg shadow-xl border border-secondary flex items-center gap-3">
+<div class="w-8 h-8 rounded-md bg-secondary-container flex items-center justify-center text-[10px] font-bold text-on-secondary-container">AB</div>
+<div>
+<p class="text-xs font-bold leading-none">Full Stack</p>
+<p class="text-[10px] text-on-surface-variant">$190k</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 bg-surface dark:bg-inverse-surface shadow-lg rounded-t-xl">
+<!-- Jobs (Active) -->
+<button class="flex flex-col items-center justify-center bg-secondary-container dark:bg-on-secondary-fixed-variant text-on-secondary-container dark:text-secondary-fixed rounded-full px-4 py-1 transition-all duration-150 active:scale-90">
+<span class="material-symbols-outlined text-sm" data-icon="work" style="font-variation-settings: 'FILL' 1;">work</span>
+<span class="font-label-sm text-label-sm">Jobs</span>
+</button>
+<!-- Map -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:bg-surface-container-high dark:hover:bg-surface-variant rounded-full transition-all duration-150 active:scale-90">
+<span class="material-symbols-outlined text-sm" data-icon="map">map</span>
+<span class="font-label-sm text-label-sm">Map</span>
+</button>
+<!-- Upload -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:bg-surface-container-high dark:hover:bg-surface-variant rounded-full transition-all duration-150 active:scale-90">
+<span class="material-symbols-outlined text-sm" data-icon="upload_file">upload_file</span>
+<span class="font-label-sm text-label-sm">Upload</span>
+</button>
+<!-- Profile -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:bg-surface-container-high dark:hover:bg-surface-variant rounded-full transition-all duration-150 active:scale-90">
+<span class="material-symbols-outlined text-sm" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+<script>
+        const listViewBtn = document.getElementById('listViewBtn');
+        const mapViewBtn = document.getElementById('mapViewBtn');
+        const listView = document.getElementById('listView');
+        const mapView = document.getElementById('mapView');
+        const mapLoader = document.getElementById('mapLoader');
+
+        listViewBtn.addEventListener('click', () => {
+            // Update buttons
+            listViewBtn.classList.add('bg-secondary-container', 'text-on-secondary-container', 'shadow-sm');
+            listViewBtn.classList.remove('text-on-surface-variant', 'hover:bg-surface-variant');
+            
+            mapViewBtn.classList.remove('bg-secondary-container', 'text-on-secondary-container', 'shadow-sm');
+            mapViewBtn.classList.add('text-on-surface-variant', 'hover:bg-surface-variant');
+
+            // Update view
+            mapView.classList.add('hidden', 'opacity-0', 'translate-y-4');
+            listView.classList.remove('hidden');
+            setTimeout(() => {
+                listView.classList.remove('opacity-0', '-translate-y-4');
+                listView.classList.add('opacity-100', 'translate-y-0');
+            }, 10);
+        });
+
+        mapViewBtn.addEventListener('click', () => {
+            // Update buttons
+            mapViewBtn.classList.add('bg-secondary-container', 'text-on-secondary-container', 'shadow-sm');
+            mapViewBtn.classList.remove('text-on-surface-variant', 'hover:bg-surface-variant');
+            
+            listViewBtn.classList.remove('bg-secondary-container', 'text-on-secondary-container', 'shadow-sm');
+            listViewBtn.classList.add('text-on-surface-variant', 'hover:bg-surface-variant');
+
+            // Update view
+            listView.classList.add('hidden');
+            mapView.classList.remove('hidden');
+            
+            setTimeout(() => {
+                mapView.classList.remove('opacity-0', 'translate-y-4');
+                mapView.classList.add('opacity-100', 'translate-y-0');
+            }, 10);
+
+            // Hide loader after simulation
+            setTimeout(() => {
+                mapLoader.classList.add('opacity-0');
+                setTimeout(() => mapLoader.classList.add('hidden'), 500);
+            }, 1500);
+        });
+
+        // Add smooth interaction for cards
+        document.querySelectorAll('.group').forEach(card => {
+            card.addEventListener('mousedown', () => card.style.transform = 'scale(0.98)');
+            card.addEventListener('mouseup', () => card.style.transform = 'scale(1)');
+            card.addEventListener('mouseleave', () => card.style.transform = 'scale(1)');
+        });
+    </script>
+</body></html>

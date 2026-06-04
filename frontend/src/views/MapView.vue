@@ -6,7 +6,6 @@
           <span class="material-symbols-outlined text-primary">explore</span>
           <span class="font-headline-md text-headline-md font-bold text-primary">GeoHire</span>
         </div>
-
       </div>
       <div class="px-container-margin lg:px-6 pb-3 lg:pb-4 max-w-2xl">
         <div class="relative flex items-center">
@@ -26,7 +25,6 @@
       <div class="absolute inset-0 z-0">
         <JobMap :jobs="filteredJobs" :center="mapStore.center" :zoom="mapStore.zoom"
           :draw-active="drawActive" :cleared="clearedCount"
-          :route-to="routeTo" :home-lat="resumeStore.homeLatitude" :home-lng="resumeStore.homeLongitude"
           @update:center="onCenterChange" @update:zoom="onZoomChange" @pin-click="onPinClick"
           @area-drawn="onAreaDrawn" />
         <div class="absolute inset-0 map-gradient-overlay pointer-events-none"></div>
@@ -92,25 +90,31 @@
       <!-- Mobile slide-up card -->
       <div class="absolute bottom-4 left-4 right-4 z-40 lg:hidden transition-transform duration-300 ease-out"
         :class="selectedJob ? 'translate-y-0' : 'translate-y-[150%]'">
-        <div class="bg-surface-container-lowest p-md rounded-xl shadow-xl border border-outline-variant flex items-center gap-md">
-          <div class="w-14 h-14 rounded-lg bg-surface-container flex items-center justify-center overflow-hidden flex-shrink-0">
-            <span class="text-primary font-bold text-lg">{{ selectedJob?.company?.charAt(0) }}</span>
+        <div class="bg-surface-container-lowest p-md rounded-xl shadow-xl border border-outline-variant">
+          <div class="flex items-center gap-md">
+            <div class="w-14 h-14 rounded-lg bg-surface-container flex items-center justify-center overflow-hidden flex-shrink-0">
+              <span class="text-primary font-bold text-lg">{{ selectedJob?.company?.charAt(0) }}</span>
+            </div>
+            <div class="flex-grow min-w-0">
+              <div class="flex justify-between items-start">
+                <h3 class="font-headline-sm text-headline-sm text-on-surface truncate">{{ selectedJob?.title }}</h3>
+                <button @click="clearSelection" class="text-outline hover:text-on-surface shrink-0 ml-2">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <p class="text-body-sm text-on-surface-variant">{{ selectedJob?.company }} &bull; {{ selectedJob?.location }}</p>
+            </div>
           </div>
-          <div class="flex-grow min-w-0">
-            <div class="flex justify-between items-start">
-              <h3 class="font-headline-sm text-headline-sm text-on-surface truncate">{{ selectedJob?.title }}</h3>
-              <button @click="clearSelection" class="text-outline hover:text-on-surface shrink-0 ml-2">
-                <span class="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            <p class="text-body-sm text-on-surface-variant">{{ selectedJob?.company }} &bull; {{ selectedJob?.location }}</p>
-            <div class="mt-2 flex items-center justify-between">
-              <span class="text-label-md text-primary">{{ selectedJob?.salary }}</span>
-              <router-link :to="`/jobs/${selectedJob?.id}`"
-                class="bg-primary text-on-primary text-label-md px-4 py-1.5 rounded-lg active:scale-95 transition-transform inline-block">
-                View Details
-              </router-link>
-            </div>
+          <div v-if="distanceInfo" class="mt-3 flex items-center gap-2 bg-surface-container-low px-3 py-2 rounded-lg text-sm">
+            <span class="material-symbols-outlined text-base text-primary">home</span>
+            <span class="text-on-surface-variant">{{ distanceInfo }}</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="text-label-md text-primary">{{ selectedJob?.salary }}</span>
+            <router-link :to="`/jobs/${selectedJob?.id}`"
+              class="bg-primary text-on-primary text-label-md px-4 py-1.5 rounded-lg active:scale-95 transition-transform inline-block">
+              View Details
+            </router-link>
           </div>
         </div>
       </div>
@@ -128,6 +132,10 @@
           </div>
           <h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">{{ selectedJob.title }}</h3>
           <p class="text-body-sm text-on-surface-variant mb-3">{{ selectedJob.company }} &bull; {{ selectedJob.location }}</p>
+          <div v-if="distanceInfo" class="flex items-center gap-2 bg-surface-container-low px-3 py-2 rounded-lg text-sm mb-4">
+            <span class="material-symbols-outlined text-base text-primary">home</span>
+            <span class="text-on-surface-variant">{{ distanceInfo }}</span>
+          </div>
           <p v-if="selectedJob.salary" class="text-label-md text-primary mb-4">{{ selectedJob.salary }}</p>
           <p v-if="selectedJob.description" class="text-body-sm text-on-surface-variant mb-4 line-clamp-3">{{ selectedJob.description }}</p>
           <router-link :to="`/jobs/${selectedJob.id}`"
@@ -158,7 +166,7 @@ const searched = ref(false)
 const drawActive = ref(false)
 const areaBounds = ref(null)
 const clearedCount = ref(0)
-const routeTo = ref(null)
+const distanceInfo = ref(null)
 
 const mapJobs = computed(() => jobsStore.jobs.filter(j => j.latitude && j.longitude))
 
@@ -171,10 +179,42 @@ const filteredJobs = computed(() => {
   )
 })
 
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+async function computeDistance(lat, lng) {
+  const homeLat = resumeStore.homeLatitude
+  const homeLng = resumeStore.homeLongitude
+  if (homeLat == null) return null
+
+  const straightKm = haversineKm(homeLat, homeLng, lat, lng)
+  if (straightKm < 1) return `Less than 1 km from home`
+
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${homeLng},${homeLat};${lng},${lat}?overview=false`
+    const res = await fetch(url)
+    const data = await res.json()
+    if (data.code === 'Ok' && data.routes?.length) {
+      const dist = (data.routes[0].distance / 1000).toFixed(1)
+      const dur = Math.round(data.routes[0].duration / 60)
+      return `${dist} km (${dur} min drive) from home`
+    }
+  } catch { /* fallback to straight-line */ }
+
+  return `${straightKm.toFixed(1)} km (straight line) from home`
+}
+
 async function searchLocation() {
   if (!searchQuery.value) return
   searched.value = true
   selectedJob.value = null
+  distanceInfo.value = null
   await jobsStore.fetchJobs(searchQuery.value)
   if (!jobsStore.jobs.length) {
     await jobsStore.scrapeJobs(searchQuery.value)
@@ -218,13 +258,14 @@ function onZoomChange(zoom) {
 
 function clearSelection() {
   selectedJob.value = null
-  routeTo.value = null
+  distanceInfo.value = null
 }
 
-function onPinClick(job) {
+async function onPinClick(job) {
   selectedJob.value = job
+  distanceInfo.value = null
   if (resumeStore.homeLatitude != null && job.latitude && job.longitude) {
-    routeTo.value = { lat: job.latitude, lng: job.longitude }
+    distanceInfo.value = await computeDistance(job.latitude, job.longitude)
   }
 }
 

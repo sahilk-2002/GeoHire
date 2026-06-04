@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from typing import Optional
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -11,19 +12,20 @@ def _ensure_dirs():
 
 
 def _slugify(location: str) -> str:
-    return location.lower().replace(" ", "-").replace(",", "")
+    slug = location.lower().replace(" ", "-").replace(",", "")
+    return re.sub(r"[^\w-]", "", slug)
 
 
 def get_cached_jobs(location: str) -> Optional[list[dict]]:
-    _ensure_dirs()
     path = os.path.join(JOBS_DIR, f"{_slugify(location)}.json")
-    if not os.path.exists(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
         return None
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
 
 
-def save_jobs(location: str, jobs: list[dict]):
+def save_jobs(location: str, jobs: list[dict]) -> None:
     _ensure_dirs()
     path = os.path.join(JOBS_DIR, f"{_slugify(location)}.json")
     with open(path, "w", encoding="utf-8") as f:

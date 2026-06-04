@@ -14,11 +14,16 @@ export const useJobsStore = defineStore('jobs', () => {
     location.value = loc
     try {
       const res = await fetch(`/api/jobs?location=${encodeURIComponent(loc)}`)
+      if (!res.ok) {
+        jobs.value = []
+        error.value = `No jobs found for "${loc}". Try searching a different area.`
+        return
+      }
       const data = await res.json()
       jobs.value = data.jobs || []
     } catch {
       jobs.value = []
-      error.value = 'Backend unreachable. Start the API server or add mock data.'
+      error.value = 'Backend unreachable.'
     } finally {
       loading.value = false
     }
@@ -29,10 +34,13 @@ export const useJobsStore = defineStore('jobs', () => {
     error.value = ''
     try {
       const res = await fetch(`/api/scrape?location=${encodeURIComponent(loc)}`, { method: 'POST' })
-      const data = await res.json()
-      jobs.value = data.jobs || []
+      if (!res.ok) {
+        error.value = `Could not find jobs for "${loc}".`
+        return
+      }
+      await fetchJobs(loc)
     } catch {
-      error.value = 'Could not load jobs. Start the backend server.'
+      error.value = 'Backend unreachable.'
     } finally {
       loading.value = false
     }

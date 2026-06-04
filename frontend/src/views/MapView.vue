@@ -6,6 +6,7 @@
           <span class="material-symbols-outlined text-primary">explore</span>
           <span class="font-headline-md text-headline-md font-bold text-primary">GeoHire</span>
         </div>
+        <router-link to="/upload" class="text-primary font-label-md text-label-md">Upload Resume</router-link>
       </div>
       <div class="px-md pb-sm">
         <div class="relative flex items-center">
@@ -20,7 +21,10 @@
 
     <main class="flex-1 relative">
       <JobMap :jobs="mapJobs" :center="mapStore.center" :zoom="mapStore.zoom"
-        @update:center="mapStore.setCenter" @update:zoom="setZoom" />
+        @update:center="onCenterChange" @update:zoom="onZoomChange" />
+      <div v-if="!mapJobs.length" class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+        <p class="bg-surface-container-lowest/90 px-lg py-md rounded-xl shadow-sm text-on-surface-variant text-sm">Search a location to see job pins on the map</p>
+      </div>
     </main>
   </div>
 </template>
@@ -43,7 +47,11 @@ function searchLocation() {
   }
 }
 
-function setZoom(z) {
-  mapStore.zoom = z
+function onCenterChange(center) {
+  mapStore.setCenter(center)
+}
+
+function onZoomChange(zoom) {
+  mapStore.zoom = zoom
 }
 </script>

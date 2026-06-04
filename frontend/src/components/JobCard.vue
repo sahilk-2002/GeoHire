@@ -7,7 +7,7 @@
       </div>
       <span @click.stop="toggleBookmark"
         class="material-symbols-outlined text-outline group-hover:text-primary transition-colors cursor-pointer"
-        :class="bookmarked ? 'fill-icon' : ''">
+        :class="isBookmarked ? 'fill-icon text-primary' : ''">
         bookmark
       </span>
     </div>
@@ -34,21 +34,25 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
   job: Object,
   matchScore: Number
 })
 
-const bookmarks = JSON.parse(localStorage.getItem('geohire_bookmarks') || '[]')
-const bookmarked = computed(() => bookmarks.includes(props.job.id))
+const bookmarks = ref(JSON.parse(localStorage.getItem('geohire_bookmarks') || '[]'))
+
+const isBookmarked = computed(() => bookmarks.value.includes(props.job.id))
 
 function toggleBookmark() {
-  const idx = bookmarks.indexOf(props.job.id)
-  if (idx > -1) bookmarks.splice(idx, 1)
-  else bookmarks.push(props.job.id)
-  localStorage.setItem('geohire_bookmarks', JSON.stringify(bookmarks))
+  const idx = bookmarks.value.indexOf(props.job.id)
+  if (idx > -1) {
+    bookmarks.value.splice(idx, 1)
+  } else {
+    bookmarks.value.push(props.job.id)
+  }
+  localStorage.setItem('geohire_bookmarks', JSON.stringify(bookmarks.value))
 }
 </script>
 

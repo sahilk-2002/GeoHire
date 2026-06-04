@@ -6,8 +6,13 @@ export const useMapStore = defineStore('map', () => {
   const zoom = ref(2)
   const selectedJob = ref(null)
 
-  function setCenter(lat, lon) {
-    center.value = [lat, lon]
+  function setCenter(lat, lng) {
+    if (typeof lat === 'object') {
+      const obj = lat
+      center.value = [obj.lat ?? obj[0] ?? 20, obj.lng ?? obj[1] ?? 0]
+    } else {
+      center.value = [lat, lng ?? 0]
+    }
     zoom.value = 11
   }
 

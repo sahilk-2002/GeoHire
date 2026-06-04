@@ -15,6 +15,11 @@
     <main class="max-w-5xl mx-auto px-container-margin pt-sm">
       <SearchBar @search="handleSearch" />
 
+      <div v-if="jobsStore.error && !jobsStore.jobs.length" class="mb-md p-md bg-error-container text-on-error-container rounded-xl text-sm">
+        {{ jobsStore.error }}
+        <button @click="loadMock" class="ml-2 underline font-semibold">Load sample data</button>
+      </div>
+
       <div v-if="jobsStore.jobs.length || jobsStore.matches.length" class="flex items-center justify-between mb-md">
         <ViewToggle :view="currentView" @toggle="currentView = $event" />
         <button class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-full font-label-sm hover:bg-surface-container-high transition-colors">
@@ -27,31 +32,30 @@
         <span class="material-symbols-outlined text-primary text-4xl animate-spin">progress_activity</span>
       </div>
 
-      <div v-if="currentView === 'list' && !jobsStore.loading">
+      <!-- Welcome state -->
+      <div v-if="!jobsStore.jobs.length && !jobsStore.matches.length && !jobsStore.loading && !jobsStore.location" class="text-center py-16">
+        <span class="material-symbols-outlined text-6xl text-primary mb-6 block">explore</span>
+        <h2 class="font-headline-md text-headline-md text-on-surface mb-2">Find Your Next Role</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant max-w-md mx-auto mb-8">Search for a location above to discover jobs, or upload your resume to get personalized matches.</p>
+        <div class="flex flex-col sm:flex-row gap-md justify-center">
+          <router-link to="/upload" class="bg-primary text-on-primary px-lg py-sm rounded-lg font-label-md inline-block">Upload Resume</router-link>
+          <button @click="loadMock" class="border border-outline-variant px-lg py-sm rounded-lg font-label-md text-on-surface hover:bg-surface-container-high">Browse sample jobs</button>
+        </div>
+      </div>
+
+      <div v-if="currentView === 'list' && !jobsStore.loading && (jobsStore.jobs.length || jobsStore.matches.length)">
         <div v-if="displayJobs.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
           <JobCard v-for="item in displayJobs" :key="item.job?.id || item.id"
             :job="item.job || item" :match-score="item.score" />
         </div>
-        <div v-else-if="jobsStore.location" class="text-center py-20 text-on-surface-variant">
+        <div v-else class="text-center py-20 text-on-surface-variant">
           <span class="material-symbols-outlined text-5xl mb-4 block">search_off</span>
           <p>No jobs found for this location. Try searching a different area.</p>
         </div>
       </div>
 
-      <div v-if="currentView === 'map' && !jobsStore.loading" class="relative">
-        <JobMap :jobs="mapJobs" :center="mapCenter" :zoom="11" />
-        <div v-if="mapStore.selectedJob"
-          class="absolute bottom-4 left-4 right-4 z-40 bg-surface-container-lowest p-md rounded-xl shadow-xl border border-outline-variant flex items-center gap-md cursor-pointer"
-          @click="$router.push(`/jobs/${mapStore.selectedJob.id}`)">
-          <div class="w-14 h-14 rounded-lg bg-surface-container flex items-center justify-center text-primary font-bold text-xl shrink-0">
-            {{ mapStore.selectedJob.company.charAt(0) }}
-          </div>
-          <div class="flex-grow min-w-0">
-            <h3 class="font-headline-sm text-headline-sm text-on-surface truncate">{{ mapStore.selectedJob.title }}</h3>
-            <p class="text-body-sm text-on-surface-variant">{{ mapStore.selectedJob.company }}</p>
-            <span v-if="mapStore.selectedJob.salary" class="text-label-md text-primary">{{ mapStore.selectedJob.salary }}</span>
-          </div>
-        </div>
+      <div v-if="currentView === 'map' && !jobsStore.loading && (jobsStore.jobs.length || jobsStore.matches.length)" class="relative">
+        <JobMap :jobs="mapJobs" :center="mapCenter" :zoom="11" :style="{ height: mapJobs.length ? '600px' : '400px' }" />
       </div>
     </main>
   </div>
@@ -87,8 +91,13 @@ const mapCenter = computed(() => {
   return [37.7749, -122.4194]
 })
 
+function loadMock() {
+  jobsStore.loadMockData()
+}
+
 async function handleSearch(title, location) {
   if (!location) return
+  jobsStore.location = location
   await jobsStore.fetchJobs(location)
   if (!jobsStore.jobs.length) {
     await jobsStore.scrapeJobs(location)

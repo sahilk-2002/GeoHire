@@ -1,8 +1,8 @@
 <template>
-  <div class="h-[600px] w-full rounded-2xl overflow-hidden shadow-lg border border-outline-variant relative">
+  <div class="h-full w-full rounded-2xl overflow-hidden shadow-lg border border-outline-variant relative">
     <l-map :zoom="zoom" :center="center" @update:center="emitCenter" @update:zoom="emitZoom" style="height: 100%; width: 100%;">
       <l-tile-layer :url="tileUrl" :attribution="attribution" />
-      <MapPin v-for="job in jobs" :key="job.id" :job="job" />
+      <MapPin v-for="job in jobs" :key="job.id" :job="job" @pin-click="(j) => $emit('pin-click', j)" />
     </l-map>
   </div>
 </template>
@@ -17,7 +17,7 @@ const props = defineProps({
   zoom: { type: Number, default: 2 }
 })
 
-const emit = defineEmits(['update:center', 'update:zoom'])
+const emit = defineEmits(['update:center', 'update:zoom', 'pin-click'])
 const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 

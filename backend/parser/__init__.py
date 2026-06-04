@@ -42,7 +42,7 @@ def _find_skills(text: str) -> list[str]:
 
 
 def _estimate_experience(text: str) -> Optional[float]:
-    matches = re.findall(r"(\d+)\s*(?:\+|years?\s*(?:of\s+)?experience|yoe)", text.lower())
+    matches = re.findall(r"(\d+)\s*(?:\+|years?\s*(?:of\s+)?(?:experience)?|yoe)", text.lower())
     if matches:
         years = [int(m) for m in matches]
         return float(max(years))

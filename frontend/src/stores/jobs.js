@@ -29,11 +29,13 @@ export const useJobsStore = defineStore('jobs', () => {
     }
   }
 
-  async function scrapeJobs(loc) {
+  async function scrapeJobs(loc, query = '') {
     loading.value = true
     error.value = ''
     try {
-      const res = await fetch(`/api/scrape?location=${encodeURIComponent(loc)}`, { method: 'POST' })
+      let url = `/api/scrape?location=${encodeURIComponent(loc)}`
+      if (query) url += `&query=${encodeURIComponent(query)}`
+      const res = await fetch(url, { method: 'POST' })
       if (!res.ok) {
         error.value = `Could not find jobs for "${loc}".`
         return

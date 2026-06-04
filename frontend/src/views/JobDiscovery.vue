@@ -24,7 +24,6 @@
 
       <div v-if="jobsStore.error && !jobsStore.jobs.length" class="mb-md p-md bg-error-container text-on-error-container rounded-xl text-sm">
         {{ jobsStore.error }}
-        <button @click="loadMock" class="ml-2 underline font-semibold">Load sample data</button>
       </div>
 
       <div v-if="jobsStore.jobs.length || jobsStore.matches.length" class="flex items-center justify-between mb-md">
@@ -44,9 +43,10 @@
             Map View
           </button>
         </div>
-        <button class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-full font-label-sm hover:bg-surface-container-high transition-colors">
+        <button @click="showFilters = !showFilters" class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-full font-label-sm hover:bg-surface-container-high transition-colors relative">
           <span class="material-symbols-outlined text-sm">tune</span>
           Filters
+          <span v-if="activeFilterCount" class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-primary text-on-primary text-[10px] font-bold rounded-full flex items-center justify-center">{{ activeFilterCount }}</span>
         </button>
       </div>
 
@@ -61,7 +61,34 @@
         <p class="font-body-md text-body-md text-on-surface-variant max-w-lg mx-auto mb-8">Search for a location above to discover jobs, or upload your resume to get personalized matches.</p>
         <div class="flex flex-col sm:flex-row gap-md justify-center">
           <router-link to="/upload" class="bg-primary text-on-primary px-6 py-3 rounded-lg font-label-md inline-block">Upload Resume</router-link>
-          <button @click="loadMock" class="border border-outline-variant px-6 py-3 rounded-lg font-label-md text-on-surface hover:bg-surface-container-high">Browse sample jobs</button>
+          
+        </div>
+      </div>
+
+      <div v-if="showFilters" class="mb-md p-md bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm">
+        <div class="flex flex-wrap gap-md items-end">
+          <div>
+            <label class="block text-label-sm text-on-surface-variant mb-1">Job Type</label>
+            <select v-model="filters.jobType" class="border border-outline-variant rounded-lg px-3 py-2 bg-surface-container-low text-sm">
+              <option value="">All</option>
+              <option value="full-time">Full-time</option>
+              <option value="part-time">Part-time</option>
+              <option value="contract">Contract</option>
+              <option value="internship">Internship</option>
+              <option value="temporary">Temporary</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-label-sm text-on-surface-variant mb-1">Salary Min</label>
+            <select v-model="filters.salaryMin" class="border border-outline-variant rounded-lg px-3 py-2 bg-surface-container-low text-sm">
+              <option value="">Any</option>
+              <option value="50000">$50K</option>
+              <option value="100000">$100K</option>
+              <option value="150000">$150K</option>
+              <option value="200000">$200K</option>
+            </select>
+          </div>
+          <button @click="clearFilters" class="px-4 py-2 border border-outline-variant rounded-lg text-sm hover:bg-surface-container-high">Clear</button>
         </div>
       </div>
 
@@ -72,7 +99,8 @@
         </div>
         <div v-else class="text-center py-20 text-on-surface-variant">
           <span class="material-symbols-outlined text-5xl mb-4 block">search_off</span>
-          <p>No jobs found for this location. Try searching a different area.</p>
+          <p v-if="activeFilterCount">No jobs match your filters. Try adjusting them.</p>
+          <p v-else>No jobs found for this location. Try searching a different area.</p>
         </div>
       </div>
 
@@ -81,7 +109,7 @@
           <div v-if="mapLoading" class="absolute inset-0 bg-surface-container-high animate-pulse flex items-center justify-center z-10">
             <span class="material-symbols-outlined text-primary text-4xl animate-spin">progress_activity</span>
           </div>
-          <JobMap :jobs="mapJobs" :center="mapCenter" :zoom="11" @pin-click="onPinClick" />
+          <JobMap :jobs="mapJobs" :center="mapCenter" :zoom="mapZoom" @pin-click="onPinClick" />
         </div>
       </div>
     </main>
@@ -104,20 +132,64 @@ const mapStore = useMapStore()
 const resumeStore = useResumeStore()
 const currentView = ref('list')
 const mapLoading = ref(false)
+const showFilters = ref(false)
+const filters = ref({ jobType: '', salaryMin: '' })
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (filters.value.jobType) count++
+  if (filters.value.salaryMin) count++
+  return count
+})
+
+const filteredJobs = computed(() => {
+  let source = jobsStore.matches.length ? jobsStore.matches.map(m => m.job) : jobsStore.jobs
+  if (filters.value.jobType) {
+    const t = filters.value.jobType.toLowerCase()
+    source = source.filter(j => (j.job_type || '').toLowerCase().includes(t))
+  }
+  if (filters.value.salaryMin) {
+    const min = parseInt(filters.value.salaryMin)
+    source = source.filter(j => {
+      if (!j.salary) return false
+      const nums = j.salary.match(/\d+/g)
+      return nums && nums.some(n => parseInt(n) >= min)
+    })
+  }
+  return source
+})
+
+function clearFilters() {
+  filters.value = { jobType: '', salaryMin: '' }
+}
 
 const displayJobs = computed(() => {
   if (jobsStore.matches.length) return jobsStore.matches
-  return jobsStore.jobs.map(j => ({ job: j }))
+  return filteredJobs.value.map(j => ({ job: j }))
 })
 
 const mapJobs = computed(() => {
-  const source = jobsStore.matches.length ? jobsStore.matches.map(m => m.job) : jobsStore.jobs
-  return source.filter(j => j.latitude && j.longitude)
+  return filteredJobs.value.filter(j => j.latitude && j.longitude)
 })
 
 const mapCenter = computed(() => {
   if (mapStore.center[0] !== 20 || mapStore.center[1] !== 0) return mapStore.center
-  return [37.7749, -122.4194]
+  const first = mapJobs.value[0]
+  if (first && first.latitude && first.longitude) {
+    return [first.latitude, first.longitude]
+  }
+  return [20, 0]
+})
+
+const mapZoom = computed(() => {
+  if (mapStore.zoom !== 2) return mapStore.zoom
+  const lats = mapJobs.value.map(j => j.latitude).filter(Boolean)
+  if (!lats.length) return 2
+  const spread = Math.max(...lats) - Math.min(...lats)
+  if (spread < 0.5) return 11
+  if (spread < 2) return 9
+  if (spread < 10) return 6
+  return 4
 })
 
 watch(currentView, (val) => {
@@ -131,17 +203,10 @@ function onPinClick(job) {
   router.push(`/jobs/${job.id}`)
 }
 
-function loadMock() {
-  jobsStore.loadMockData()
-}
-
 async function handleSearch(title, location) {
   if (!location) return
   jobsStore.location = location
-  await jobsStore.fetchJobs(location)
-  if (!jobsStore.jobs.length) {
-    await jobsStore.scrapeJobs(location)
-  }
+  await jobsStore.scrapeJobs(location, title)
   if (resumeStore.resumeId) {
     await jobsStore.matchJobs(resumeStore.resumeId, location)
   }

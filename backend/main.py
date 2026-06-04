@@ -3,9 +3,13 @@ import logging
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from fastapi import UploadFile, File
+
 from models import Job, JobListResponse, ScrapeResponse
 from scrapers.indeed import scrape_indeed
+from scrapers.demo import generate_jobs
 from cache import get_cached_jobs, save_jobs
+from parser import parse_resume
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -24,22 +28,35 @@ def health():
     return {"status": "ok"}
 
 
+@app.post("/upload-resume")
+async def upload_resume(file: UploadFile = File(...)):
+    if file.filename is None:
+        raise HTTPException(status_code=400, detail="No filename")
+    content = await file.read()
+    try:
+        profile = parse_resume(file.filename, content)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"id": profile["id"], "profile": profile}
+
+
 @app.post("/scrape", response_model=ScrapeResponse)
 def scrape_location(location: str = Query(..., description="City and state, e.g. 'San Francisco, CA'")):
     try:
         jobs_data = scrape_indeed(location)
+        if jobs_data:
+            jobs = [Job(**j) for j in jobs_data]
+            save_jobs(location, jobs_data)
+            return ScrapeResponse(location=location, jobs=jobs)
     except Exception as e:
-        cached = get_cached_jobs(location)
-        if cached is not None:
-            jobs = [Job(**j) for j in cached]
-            return ScrapeResponse(
-                location=location, jobs=jobs, message=f"Scraping failed, returning cached data: {e}"
-            )
-        raise HTTPException(status_code=502, detail=f"Scraping failed: {str(e)}")
+        logging.warning("Indeed scrape failed: %s", e)
 
+    # Fallback: generate demo jobs for this location
+    logging.info("Generating demo jobs for %s", location)
+    jobs_data = generate_jobs(location)
     jobs = [Job(**j) for j in jobs_data]
     save_jobs(location, jobs_data)
-    return ScrapeResponse(location=location, jobs=jobs)
+    return ScrapeResponse(location=location, jobs=jobs, message="Demo data – real Indeed scraping unavailable")
 
 
 @app.get("/jobs", response_model=JobListResponse)

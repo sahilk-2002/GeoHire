@@ -28,10 +28,11 @@ export const useJobsStore = defineStore('jobs', () => {
     loading.value = true
     error.value = ''
     try {
-      await fetch(`/api/scrape?location=${encodeURIComponent(loc)}`, { method: 'POST' })
-      setTimeout(() => fetchJobs(loc), 3000)
+      const res = await fetch(`/api/scrape?location=${encodeURIComponent(loc)}`, { method: 'POST' })
+      const data = await res.json()
+      jobs.value = data.jobs || []
     } catch {
-      error.value = 'Could not start scraping. Backend may be offline.'
+      error.value = 'Could not load jobs. Start the backend server.'
     } finally {
       loading.value = false
     }

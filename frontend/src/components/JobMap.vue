@@ -1,8 +1,8 @@
 <template>
   <div class="h-full w-full rounded-2xl overflow-hidden shadow-lg border border-outline-variant relative">
     <l-map ref="mapRef" :zoom="zoom" :center="center" :useGlobalLeaflet="false" :options="mapOptions"
+      @ready="onMapReady"
       @update:center="emitCenter" @update:zoom="emitZoom"
-      @mousedown="onMouseDown" @mousemove="onMouseMove" @mouseup="onMouseUp"
       style="height: 100%; width: 100%; cursor: default;">
       <l-tile-layer :url="tileUrl" :attribution="attribution" />
       <MapPin v-for="job in jobs" :key="job.id" :job="job" @pin-click="(j) => $emit('pin-click', j)" />
@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import { LMap, LTileLayer } from '@vue-leaflet/vue-leaflet'
 import L from 'leaflet'
 import MapPin from './MapPin.vue'
@@ -43,14 +43,13 @@ watch(() => props.drawActive, (active) => {
   if (!active) removeRect()
 })
 
-onMounted(() => {
-  leafletMap = mapRef.value?.leafletObject
-  if (!leafletMap) return
+function onMapReady(map) {
+  leafletMap = map
   leafletMap.on('mousedown', onMouseDown)
   leafletMap.on('mousemove', onMouseMove)
   leafletMap.on('mouseup', onMouseUp)
   drawListeners = [leafletMap]
-})
+}
 
 onUnmounted(() => {
   drawListeners.forEach(m => m.off())

@@ -7,7 +7,7 @@
       </div>
       <span @click.stop="toggleBookmark"
         class="material-symbols-outlined text-outline group-hover:text-primary transition-colors cursor-pointer"
-        :style="bookmarked ? { fontVariationSettings: \"'FILL' 1\" } : {}">
+        :class="bookmarked ? 'fill-icon' : ''">
         bookmark
       </span>
     </div>
@@ -51,3 +51,9 @@ function toggleBookmark() {
   localStorage.setItem('geohire_bookmarks', JSON.stringify(bookmarks))
 }
 </script>
+
+<style scoped>
+.fill-icon {
+  font-variation-settings: 'FILL' 1;
+}
+</style>

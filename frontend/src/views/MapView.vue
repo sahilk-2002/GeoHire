@@ -39,7 +39,7 @@
       <div v-if="jobsStore.loading" class="absolute inset-0 flex items-center justify-center z-10 bg-background/60">
         <div class="bg-surface-container-lowest px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
           <span class="material-symbols-outlined text-primary text-2xl animate-spin">progress_activity</span>
-          <span class="text-body-md text-on-surface">Searching jobs in &ldquo;{{ searchQuery }}&rdquo;&hellip;</span>
+          <span class="text-base text-on-surface">Searching jobs in &ldquo;{{ searchQuery }}&rdquo;&hellip;</span>
         </div>
       </div>
 

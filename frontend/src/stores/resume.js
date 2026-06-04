@@ -29,11 +29,15 @@ export const useResumeStore = defineStore('resume', () => {
     }
   }
 
+  function updateProfile(updated) {
+    profile.value = { ...profile.value, ...updated }
+  }
+
   function clear() {
     resumeId.value = null
     profile.value = null
     uploadError.value = ''
   }
 
-  return { resumeId, profile, uploading, uploadError, uploadResume, clear }
+  return { resumeId, profile, uploading, uploadError, uploadResume, updateProfile, clear }
 })

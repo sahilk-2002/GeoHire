@@ -5,9 +5,6 @@
         <span class="material-symbols-outlined text-primary">explore</span>
         <span class="font-headline-md text-headline-md font-bold text-primary">GeoHire</span>
       </div>
-      <button class="p-2 active:scale-95 transition-transform">
-        <span class="material-symbols-outlined text-on-surface-variant">notifications</span>
-      </button>
     </header>
 
     <main class="max-w-5xl mx-auto px-container-margin lg:px-8 pt-4 lg:pt-8">

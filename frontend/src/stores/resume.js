@@ -23,16 +23,23 @@ export const useResumeStore = defineStore('resume', () => {
   const profile = ref(stored?.profile || null)
   const uploading = ref(false)
   const error = ref('')
+  const homeLatitude = ref(stored?.homeLatitude ?? null)
+  const homeLongitude = ref(stored?.homeLongitude ?? null)
 
   function persist() {
+    const data = {}
     if (profile.value) {
-      saveToStorage({ resumeId: resumeId.value, profile: profile.value })
-    } else {
-      saveToStorage(null)
+      data.resumeId = resumeId.value
+      data.profile = profile.value
     }
+    if (homeLatitude.value != null) {
+      data.homeLatitude = homeLatitude.value
+      data.homeLongitude = homeLongitude.value
+    }
+    saveToStorage(Object.keys(data).length ? data : null)
   }
 
-  watch([resumeId, profile], persist, { deep: true })
+  watch([resumeId, profile, homeLatitude, homeLongitude], persist, { deep: true })
 
   async function uploadResume(file) {
     uploading.value = true
@@ -63,11 +70,20 @@ export const useResumeStore = defineStore('resume', () => {
     profile.value = { ...profile.value, ...updated }
   }
 
+  function setHomeLocation(lat, lng) {
+    homeLatitude.value = lat
+    homeLongitude.value = lng
+  }
+
   function clear() {
     resumeId.value = null
     profile.value = null
     error.value = ''
   }
 
-  return { resumeId, profile, uploading, uploadError: error, uploadResume, updateProfile, clear }
+  return {
+    resumeId, profile, uploading, uploadError: error,
+    homeLatitude, homeLongitude,
+    uploadResume, updateProfile, setHomeLocation, clear,
+  }
 })

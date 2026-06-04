@@ -26,6 +26,7 @@
       <div class="absolute inset-0 z-0">
         <JobMap :jobs="filteredJobs" :center="mapStore.center" :zoom="mapStore.zoom"
           :draw-active="drawActive" :cleared="clearedCount"
+          :route-to="routeTo" :home-lat="resumeStore.homeLatitude" :home-lng="resumeStore.homeLongitude"
           @update:center="onCenterChange" @update:zoom="onZoomChange" @pin-click="onPinClick"
           @area-drawn="onAreaDrawn" />
         <div class="absolute inset-0 map-gradient-overlay pointer-events-none"></div>
@@ -98,7 +99,7 @@
           <div class="flex-grow min-w-0">
             <div class="flex justify-between items-start">
               <h3 class="font-headline-sm text-headline-sm text-on-surface truncate">{{ selectedJob?.title }}</h3>
-              <button @click="selectedJob = null" class="text-outline hover:text-on-surface shrink-0 ml-2">
+              <button @click="clearSelection" class="text-outline hover:text-on-surface shrink-0 ml-2">
                 <span class="material-symbols-outlined">close</span>
               </button>
             </div>
@@ -121,7 +122,7 @@
             <div class="w-14 h-14 rounded-lg bg-surface-container flex items-center justify-center">
               <span class="text-primary font-bold text-lg">{{ selectedJob.company.charAt(0) }}</span>
             </div>
-            <button @click="selectedJob = null" class="text-outline hover:text-on-surface">
+            <button @click="clearSelection" class="text-outline hover:text-on-surface">
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
@@ -144,17 +145,20 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMapStore } from '../stores/map'
 import { useJobsStore } from '../stores/jobs'
+import { useResumeStore } from '../stores/resume'
 import JobMap from '../components/JobMap.vue'
 
 const router = useRouter()
 const mapStore = useMapStore()
 const jobsStore = useJobsStore()
+const resumeStore = useResumeStore()
 const searchQuery = ref('')
 const selectedJob = ref(null)
 const searched = ref(false)
 const drawActive = ref(false)
 const areaBounds = ref(null)
 const clearedCount = ref(0)
+const routeTo = ref(null)
 
 const mapJobs = computed(() => jobsStore.jobs.filter(j => j.latitude && j.longitude))
 
@@ -212,8 +216,16 @@ function onZoomChange(zoom) {
   mapStore.zoom = zoom
 }
 
+function clearSelection() {
+  selectedJob.value = null
+  routeTo.value = null
+}
+
 function onPinClick(job) {
   selectedJob.value = job
+  if (resumeStore.homeLatitude != null && job.latitude && job.longitude) {
+    routeTo.value = { lat: job.latitude, lng: job.longitude }
+  }
 }
 
 function recenter() {

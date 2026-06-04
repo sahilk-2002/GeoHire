@@ -5,25 +5,28 @@ export const useResumeStore = defineStore('resume', () => {
   const resumeId = ref(null)
   const profile = ref(null)
   const uploading = ref(false)
-  const uploadError = ref('')
+  const error = ref('')
 
   async function uploadResume(file) {
     uploading.value = true
-    uploadError.value = ''
+    error.value = ''
+    resumeId.value = null
+    profile.value = null
     try {
       const formData = new FormData()
       formData.append('file', file)
       const res = await fetch('/api/upload-resume', { method: 'POST', body: formData })
-      const data = await res.json()
       if (!res.ok) {
-        throw new Error(data.detail || `Upload failed (${res.status})`)
+        const msg = await res.text()
+        throw new Error(msg || 'Upload failed')
       }
+      const data = await res.json()
       resumeId.value = data.id
       profile.value = data.profile
-    } catch (err) {
+    } catch (e) {
       resumeId.value = null
       profile.value = null
-      uploadError.value = err.message
+      error.value = e.message || 'Failed to parse resume. Try a different file format.'
     } finally {
       uploading.value = false
     }
@@ -32,8 +35,8 @@ export const useResumeStore = defineStore('resume', () => {
   function clear() {
     resumeId.value = null
     profile.value = null
-    uploadError.value = ''
+    error.value = ''
   }
 
-  return { resumeId, profile, uploading, uploadError, uploadResume, clear }
+  return { resumeId, profile, uploading, error, uploadResume, clear }
 })

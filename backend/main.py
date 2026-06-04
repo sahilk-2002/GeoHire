@@ -1,6 +1,7 @@
 import io
 import json
 import logging
+import os
 import uuid
 
 from dotenv import find_dotenv, load_dotenv
@@ -8,62 +9,16 @@ from fastapi import FastAPI, File, Query, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 
-from models import Job, JobListResponse, ScrapeResponse
-from scrapers.linkedin import scrape_linkedin
+load_dotenv()
+
+from models import Job, JobListResponse, ScrapeResponse, ResumeProfile, ResumeUploadResponse
+from scrapers.linkedin import search_linkedin
+from scrapers.freeapi import search_careernest, search_arbeitnow
 from cache import get_cached_jobs, save_jobs
-
-
-MOCK_JOBS = [
-    {
-        "title": "Senior Software Engineer",
-        "company": "Microsoft", "location": "{loc}",
-        "description": "Build and maintain cloud infrastructure services for millions of users worldwide.",
-        "requirements": ["5+ years experience", "Distributed systems", "Azure/AWS", "C# or Python"],
-        "salary": "$150k – $220k", "job_type": "Full-time",
-        "source": "linkedin", "latitude": 18.5204, "longitude": 73.8567,
-    },
-    {
-        "title": "Full Stack Developer",
-        "company": "Amazon", "location": "{loc}",
-        "description": "Design and implement scalable web applications for e-commerce platforms.",
-        "requirements": ["React", "Node.js", "TypeScript", "PostgreSQL"],
-        "salary": "$130k – $190k", "job_type": "Full-time",
-        "source": "linkedin", "latitude": 18.5204, "longitude": 73.8567,
-    },
-    {
-        "title": "Data Analyst",
-        "company": "Deloitte", "location": "{loc}",
-        "description": "Analyze business data to provide actionable insights for client decision-making.",
-        "requirements": ["SQL", "Python", "Tableau", "Statistics"],
-        "salary": "$90k – $130k", "job_type": "Full-time",
-        "source": "linkedin", "latitude": 18.5204, "longitude": 73.8567,
-    },
-    {
-        "title": "UX Designer",
-        "company": "Adobe", "location": "{loc}",
-        "description": "Create intuitive user experiences for creative cloud products.",
-        "requirements": ["Figma", "User research", "Prototyping", "Design systems"],
-        "salary": "$120k – $170k", "job_type": "Remote",
-        "source": "linkedin", "latitude": 18.5204, "longitude": 73.8567,
-    },
-    {
-        "title": "DevOps Engineer",
-        "company": "Netflix", "location": "{loc}",
-        "description": "Ensure reliability and scalability of streaming infrastructure.",
-        "requirements": ["Kubernetes", "Terraform", "CI/CD", "Monitoring"],
-        "salary": "$160k – $230k", "job_type": "Full-time",
-        "source": "linkedin", "latitude": 18.5204, "longitude": 73.8567,
-    },
-]
-
-
-def get_mock_jobs(location: str) -> list[dict]:
-    return [{**job, "id": str(uuid.uuid4())[:8], "location": location} for job in MOCK_JOBS]
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-# --- Config from .env ---
 AI_API_KEY = os.getenv("OPENCODE_ZEN_API_KEY", "")
 _raw_base_url = os.getenv("OPENCODE_ZEN_API_BASE_URL", "https://opencode.ai/zen/v1")
 AI_BASE_URL = _raw_base_url.replace("/chat/completions", "").rstrip("/")
@@ -72,7 +27,7 @@ AI_MODEL = os.getenv("OPENCODE_ZEN_API_MODEL", "deepseek-v4-flash-free")
 if not AI_API_KEY or AI_API_KEY == "***":
     logger.warning("OPENCODE_ZEN_API_KEY is not set in .env — resume parsing will fail")
 else:
-    logger.info("AI configured: base=%s model=%s key=%s…", AI_BASE_URL, AI_MODEL, AI_API_KEY[:12])
+    logger.info("AI configured: base=%s model=%s key=%s\u2026", AI_BASE_URL, AI_MODEL, AI_API_KEY[:12])
 
 app = FastAPI(title="GeoHire API", version="0.1.0")
 
@@ -200,30 +155,66 @@ def health():
     return {"status": "ok"}
 
 
-@app.post("/scrape", response_model=ScrapeResponse)
-def scrape_location(location: str = Query(..., description="City and state, e.g. 'San Francisco, CA'")):
-    try:
-        jobs_data = scrape_linkedin(location)
-    except Exception as e:
-        cached = get_cached_jobs(location)
-        if cached is not None:
-            jobs = [Job(**j) for j in cached]
-            return ScrapeResponse(
-                location=location, jobs=jobs, message=f"Scraping failed, returning cached data: {e}"
-            )
-        logging.warning("Scrape failed and no cache — returning mock data for '%s': %s", location, e)
-        mock_data = get_mock_jobs(location)
-        save_jobs(location, mock_data)
-        jobs = [Job(**j) for j in mock_data]
-        return ScrapeResponse(location=location, jobs=jobs, message=f"Scraping failed, returning sample data: {e}")
+@app.post("/upload-resume", response_model=ResumeUploadResponse)
+def upload_resume(file: UploadFile = File(...)):
+    if file.filename is None:
+        raise HTTPException(status_code=400, detail="No filename")
+    if not file.filename.lower().endswith((".pdf", ".docx")):
+        raise HTTPException(status_code=400, detail="Unsupported format. Upload PDF or DOCX.")
+    resume_id = str(uuid.uuid4())
+    text = _extract_text(file)
+    if not text:
+        raise HTTPException(status_code=422, detail="Could not extract text from file")
+    logger.info("Extracted resume text (first 500 chars): %.500s", text)
+    profile = _parse_resume_with_ai(text)
+    return ResumeUploadResponse(id=resume_id, profile=profile)
 
-    jobs = [Job(**j) for j in jobs_data]
-    save_jobs(location, jobs_data)
-    return ScrapeResponse(location=location, jobs=jobs)
+
+@app.post("/scrape", response_model=ScrapeResponse)
+def scrape_location(
+    location: str = Query(..., description="City and state, e.g. 'Pune, India'"),
+    query: str = Query("", description="Skills/keywords, e.g. 'python java react'"),
+):
+    errors = []
+
+    try:
+        jobs_data = search_linkedin(location, query)
+        if jobs_data:
+            jobs = [Job(**j) for j in jobs_data]
+            save_jobs(location, jobs_data)
+            return ScrapeResponse(location=location, jobs=jobs)
+    except Exception as e:
+        errors.append(f"LinkedIn: {e}")
+        logging.warning("LinkedIn failed: %s", e)
+
+    try:
+        jobs_data = search_careernest(location)
+        if jobs_data:
+            jobs = [Job(**j) for j in jobs_data]
+            save_jobs(location, jobs_data)
+            return ScrapeResponse(location=location, jobs=jobs, message="Career Nest data")
+    except Exception as e:
+        errors.append(f"Career Nest: {e}")
+        logging.warning("Career Nest failed: %s", e)
+
+    try:
+        jobs_data = search_arbeitnow(location)
+        if jobs_data:
+            jobs = [Job(**j) for j in jobs_data]
+            save_jobs(location, jobs_data)
+            return ScrapeResponse(location=location, jobs=jobs, message="Arbeitnow data")
+    except Exception as e:
+        errors.append(f"Arbeitnow: {e}")
+        logging.warning("Arbeitnow failed: %s", e)
+
+    raise HTTPException(
+        status_code=502,
+        detail=f"All sources failed: {'; '.join(errors)}"
+    )
 
 
 @app.get("/jobs", response_model=JobListResponse)
-def get_jobs(location: str = Query(..., description="City and state, e.g. 'San Francisco, CA'")):
+def get_jobs(location: str = Query(..., description="City and state, e.g. 'Pune, India'")):
     jobs_data = get_cached_jobs(location)
     if jobs_data is None:
         raise HTTPException(status_code=404, detail=f"No cached jobs for '{location}'. POST /scrape first.")
@@ -231,15 +222,22 @@ def get_jobs(location: str = Query(..., description="City and state, e.g. 'San F
     return JobListResponse(location=location, jobs=jobs, cached=True)
 
 
-@app.post("/upload-resume", response_model=ResumeUploadResponse)
-def upload_resume(file: UploadFile = File(...)):
-    resume_id = str(uuid.uuid4())
-    text = _extract_text(file)
-    logger.info("Extracted resume text (first 500 chars): %.500s", text)
-    if len(text) > 500:
-        logger.info("Extracted resume text (chars 500-1000): %.500s", text[500:1000])
-    profile = _parse_resume_with_ai(text)
-    return ResumeUploadResponse(id=resume_id, profile=profile)
+@app.post("/match-jobs")
+def match_jobs(
+    resume_id: str = Query(..., description="Resume ID from /upload-resume"),
+    location: str = Query(..., description="City and state, e.g. 'Pune, India'"),
+):
+    jobs_data = get_cached_jobs(location)
+    if not jobs_data:
+        raise HTTPException(status_code=404, detail=f"No jobs for '{location}'. POST /scrape first.")
+
+    matched = []
+    for j in jobs_data:
+        score = 0
+        matched.append({"job": j, "score": score})
+
+    matched.sort(key=lambda x: x["score"], reverse=True)
+    return {"matches": [m["job"] for m in matched]}
 
 
 if __name__ == "__main__":

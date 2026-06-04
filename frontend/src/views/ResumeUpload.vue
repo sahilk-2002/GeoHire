@@ -31,7 +31,7 @@
             <button type="button" class="bg-primary text-on-primary px-lg py-sm rounded-lg font-label-md text-label-md shadow-lg active:scale-95 transition-transform">
               Browse Files
             </button>
-            <input ref="input" type="file" accept=".pdf,.docx" class="hidden" @change="handleFile" />
+            <input ref="input" type="file" accept=".pdf,.docx" class="hidden" @change="e => handleFile(e.target.files[0])" />
           </div>
 
           <div class="mt-md flex items-center justify-center gap-md">
@@ -46,9 +46,14 @@
             Link LinkedIn Profile
           </button>
 
-          <div v-if="resumeStore.uploading" class="mt-md text-center text-on-surface-variant">
-            <span class="material-symbols-outlined animate-spin inline-block mr-2">progress_activity</span>
-            Parsing your resume...
+          <div v-if="resumeStore.uploading" class="mt-md text-center p-md bg-surface-container rounded-xl border border-outline-variant">
+            <span class="material-symbols-outlined animate-spin inline-block mr-2 text-primary">progress_activity</span>
+            <span class="text-on-surface-variant">Parsing your resume...</span>
+          </div>
+
+          <div v-if="resumeStore.error" class="mt-md p-md bg-error-container text-on-error-container rounded-xl border border-error text-sm flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">error</span>
+            {{ resumeStore.error }}
           </div>
 
           <div v-if="resumeStore.uploadError" class="mt-md p-md bg-error-container text-on-error-container rounded-xl text-sm">

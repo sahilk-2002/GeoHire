@@ -1,10 +1,8 @@
-"""Scraper for LinkedIn job listings via the public guest API."""
 import logging
-import time
 import random
 import uuid
-from urllib.parse import urlencode
 from typing import Optional
+from urllib.parse import quote
 
 import httpx
 from bs4 import BeautifulSoup
@@ -17,126 +15,155 @@ USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
 ]
 
-SEARCH_URL = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
-DETAIL_URL = "https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{job_id}"
+BASE_URL = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
+
+_geocode_cache: dict[str, tuple[float, float]] = {}
 
 
-def _build_search_url(location: str, query: str = "", start: int = 0) -> str:
-    params = urlencode({"keywords": query, "location": location, "start": start})
-    return f"{SEARCH_URL}?{params}"
-
-
-def _parse_search_results(html: str) -> list[dict]:
-    soup = BeautifulSoup(html, "lxml")
-    cards = soup.find_all("li", class_="jobs-search-results__list-item")
-    jobs = []
-    for card in cards:
-        try:
-            link = card.find("a", class_="base-card__full-link")
-            if not link or not link.get("href"):
-                continue
-            href = link["href"]
-            job_id = None
-            if "/jobs/view/" in href:
-                job_id = href.split("/jobs/view/")[1].split("/")[0]
-            if not job_id:
-                continue
-            title_el = card.find("h3", class_="base-search-card--title")
-            title = title_el.get_text(strip=True) if title_el else "Unknown"
-            company_el = card.find("h4", class_="base-search-card--subtitle")
-            company = company_el.get_text(strip=True) if company_el else "Unknown"
-            location_el = card.find("span", class_="job-search-card__location")
-            job_location = location_el.get_text(strip=True) if location_el else ""
-            time_el = card.find("time")
-            posted_date = time_el.get("datetime") if time_el else None
-            jobs.append({
-                "job_id": job_id,
-                "title": title,
-                "company": company,
-                "location": job_location,
-                "posted_date": posted_date,
-            })
-        except Exception:
-            logger.exception("Failed to parse search result card")
-            continue
-    return jobs
-
-
-def _fetch_job_detail(job_id: str, client: httpx.Client) -> dict:
-    url = DETAIL_URL.format(job_id=job_id)
-    headers = {"User-Agent": random.choice(USER_AGENTS)}
-    response = client.get(url, headers=headers, follow_redirects=True, timeout=15)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, "lxml")
-    desc_el = soup.find("div", class_="description__text")
-    description = desc_el.get_text(strip=True) if desc_el else ""
-    seniority_el = soup.find("span", class_="job-criteria__text--seniority")
-    seniority = seniority_el.get_text(strip=True) if seniority_el else None
-    employment_el = soup.find("span", class_="job-criteria__text--employment-type")
-    job_type = employment_el.get_text(strip=True) if employment_el else "Full-time"
-    salary_el = soup.find("span", class_="job-criteria__text--salary")
-    salary = salary_el.get_text(strip=True) if salary_el else None
-    return {
-        "description": description,
-        "seniority": seniority,
-        "job_type": job_type,
-        "salary": salary,
-    }
-
-
-def _geocode_location(location: str, client: httpx.Client) -> tuple[Optional[float], Optional[float]]:
+def _geocode(location: str) -> Optional[tuple[float, float]]:
+    if location in _geocode_cache:
+        return _geocode_cache[location]
     try:
         url = "https://nominatim.openstreetmap.org/search"
         params = {"q": location, "format": "json", "limit": 1}
         headers = {"User-Agent": "GeoHire/1.0"}
-        response = client.get(url, params=params, headers=headers, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        if data:
-            return float(data[0]["lat"]), float(data[0]["lon"])
+        resp = httpx.get(url, params=params, headers=headers, timeout=10)
+        data = resp.json()
+        if data and len(data) > 0:
+            coords = (float(data[0]["lat"]), float(data[0]["lon"]))
+            _geocode_cache[location] = coords
+            return coords
     except Exception:
-        logger.warning("Geocoding failed for '%s'", location)
-    return None, None
+        pass
+    return None
 
 
-def scrape_linkedin(
-    location: str,
-    query: str = "",
-    max_jobs: int = 25,
-) -> list[dict]:
-    if not location.strip():
-        return []
-    jobs_data = []
-    with httpx.Client() as client:
-        search_url = _build_search_url(location, query, 0)
-        headers = {"User-Agent": random.choice(USER_AGENTS)}
-        time.sleep(random.uniform(2, 6))
-        response = client.get(search_url, headers=headers, follow_redirects=True, timeout=30)
-        if response.status_code != 200:
-            logger.warning("LinkedIn search returned %s", response.status_code)
-            return []
-        search_results = _parse_search_results(response.text)
-        for result in search_results[:max_jobs]:
-            try:
-                time.sleep(random.uniform(1, 3))
-                detail = _fetch_job_detail(result["job_id"], client)
-                lat, lng = _geocode_location(result["location"], client)
-                jobs_data.append({
-                    "id": str(uuid.uuid4()),
-                    "title": result["title"],
-                    "company": result["company"],
-                    "location": result["location"],
-                    "description": detail.get("description", ""),
-                    "requirements": [],
-                    "salary": detail.get("salary"),
-                    "job_type": detail.get("job_type", "Full-time"),
-                    "posted_date": result.get("posted_date"),
-                    "source": "linkedin",
-                    "source_url": f"https://www.linkedin.com/jobs/view/{result['job_id']}/",
-                    "latitude": lat,
-                    "longitude": lng,
-                })
-            except Exception:
-                logger.exception("Failed to fetch detail for job %s", result["job_id"])
-                continue
-    return jobs_data
+def _jitter(base_lat: float, base_lng: float) -> tuple[float, float]:
+    lat = base_lat + random.uniform(-0.02, 0.02)
+    lng = base_lng + random.uniform(-0.02, 0.02)
+    return (lat, lng)
+
+
+def _extract_job_id(card) -> Optional[str]:
+    entity_urn = card.get("data-entity-urn", "")
+    if entity_urn:
+        parts = entity_urn.split(":")
+        if len(parts) >= 4:
+            return parts[-1]
+    return str(uuid.uuid4())
+
+
+def _extract_text(el, selector: str, default: str = "") -> str:
+    found = el.select_one(selector)
+    return found.get_text(strip=True) if found else default
+
+
+def _fetch_descriptions(urls: list[str]) -> dict[str, str]:
+    result = {}
+    if not urls:
+        return result
+    import concurrent.futures
+
+    def _fetch_one(url: str) -> tuple[str, str]:
+        if not url:
+            return (url, "")
+        try:
+            headers = {"User-Agent": random.choice(USER_AGENTS)}
+            resp = httpx.get(url, headers=headers, follow_redirects=True, timeout=8)
+            soup = BeautifulSoup(resp.text, "lxml")
+            desc = soup.select_one("div.description, article.description, div[class*='description']")
+            if desc:
+                return (url, desc.get_text(strip=True)[:2000])
+            meta = soup.select_one("meta[name='description']")
+            if meta:
+                return (url, meta.get("content", "")[:2000])
+        except Exception:
+            pass
+        return (url, "")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
+        for url, desc in pool.map(_fetch_one, urls):
+            result[url] = desc
+    return result
+
+
+def search_linkedin(location: str, query: str = "", start: int = 0) -> Optional[list[dict]]:
+    keywords = quote(query) if query else "software"
+    loc_encoded = quote(location)
+    url = f"{BASE_URL}?keywords={keywords}&location={loc_encoded}&start={start}"
+
+    headers = {
+        "User-Agent": random.choice(USER_AGENTS),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+    }
+
+    try:
+        resp = httpx.get(url, headers=headers, follow_redirects=True, timeout=30)
+        resp.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        logger.warning("LinkedIn API HTTP %s for %s", e.response.status_code, location)
+        return None
+    except Exception as e:
+        logger.warning("LinkedIn API request failed: %s", e)
+        return None
+
+    soup = BeautifulSoup(resp.text, "lxml")
+    cards = soup.select("li[data-entity-urn]")
+    if not cards:
+        cards = soup.select("div.base-search-card, div.job-search-card")
+
+    if not cards:
+        logger.warning("No job cards found for %s", location)
+        return None
+
+    fallback_coords = _geocode(location)
+
+    raw_cards = []
+    for card in cards:
+        try:
+            raw_cards.append({
+                "id": _extract_job_id(card),
+                "title": _extract_text(card, "h3.base-search-card__title, [class*='search-card__title']") or _extract_text(card, "a[data-tracking-will-navigate] span") or "Unknown",
+                "company": _extract_text(card, "h4.base-search-card__subtitle, a[class*='subtitle']") or _extract_text(card, "[class*='search-card__subtitle']") or "Unknown",
+                "location": _extract_text(card, "span.job-search-card__location, [class*='search-card__location']") or location,
+                "date": (card.select_one("time").get("datetime", "") if card.select_one("time") else ""),
+                "url": (card.select_one("a.base-card__full-link").get("href", "") if card.select_one("a.base-card__full-link") else ""),
+            })
+        except Exception:
+            continue
+
+    desc_map = _fetch_descriptions([c["url"] for c in raw_cards])
+
+    used_coords: set[tuple[float, float]] = set()
+    jobs = []
+    for c in raw_cards:
+        try:
+            coords = _geocode(c["location"])
+            if coords is None and fallback_coords is not None:
+                coords = _jitter(fallback_coords[0], fallback_coords[1])
+            lat, lng = coords if coords else (None, None)
+            if lat is not None and lng is not None:
+                while (round(lat, 4), round(lng, 4)) in used_coords:
+                    lat, lng = _jitter(lat, lng)
+                used_coords.add((round(lat, 4), round(lng, 4)))
+
+            jobs.append({
+                "id": c["id"],
+                "title": c["title"],
+                "company": c["company"],
+                "location": c["location"],
+                "description": desc_map.get(c["url"], ""),
+                "requirements": [],
+                "salary": None,
+                "job_type": "",
+                "posted_date": c["date"],
+                "source": "linkedin",
+                "source_url": c["url"],
+                "latitude": lat,
+                "longitude": lng,
+            })
+        except Exception:
+            continue
+
+    return jobs

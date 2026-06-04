@@ -28,13 +28,14 @@
         <span class="material-symbols-outlined text-sm">location_on</span>
         <span class="text-label-sm">{{ job.location }}</span>
       </div>
-      <p v-if="job.salary" class="text-label-sm font-semibold text-secondary">{{ job.salary }}</p>
+      <p v-if="salaryText" class="text-label-sm font-semibold text-secondary">{{ salaryText }}</p>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
+import { formatSalary } from '../utils/salary.js'
 
 const props = defineProps({
   job: Object,
@@ -44,6 +45,7 @@ const props = defineProps({
 const bookmarks = ref(JSON.parse(localStorage.getItem('geohire_bookmarks') || '[]'))
 
 const isBookmarked = computed(() => bookmarks.value.includes(props.job.id))
+const salaryText = computed(() => formatSalary(props.job))
 
 function toggleBookmark() {
   const idx = bookmarks.value.indexOf(props.job.id)

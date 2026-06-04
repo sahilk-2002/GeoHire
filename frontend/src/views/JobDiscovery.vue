@@ -58,7 +58,7 @@
       <div v-if="!jobsStore.jobs.length && !jobsStore.matches.length && !jobsStore.loading && !jobsStore.location" class="text-center py-16 lg:py-24">
         <span class="material-symbols-outlined text-6xl text-primary mb-6 block">explore</span>
         <h2 class="font-headline-md text-headline-md lg:text-[28px] text-on-surface mb-2">Find Your Next Role</h2>
-        <p class="font-body-md text-body-md text-on-surface-variant max-w-lg mx-auto mb-8">Search for a location above to discover jobs, or upload your resume to get personalized matches.</p>
+        <p class="text-base text-on-surface-variant max-w-lg mx-auto mb-8 leading-relaxed">Search for a location above to discover jobs, or upload your resume to get personalized matches.</p>
         <div class="flex flex-col sm:flex-row gap-md justify-center">
           <router-link to="/upload" class="bg-primary text-on-primary px-6 py-3 rounded-lg font-label-md inline-block">Upload Resume</router-link>
           <button @click="loadMock" class="border border-outline-variant px-6 py-3 rounded-lg font-label-md text-on-surface hover:bg-surface-container-high">Browse sample jobs</button>

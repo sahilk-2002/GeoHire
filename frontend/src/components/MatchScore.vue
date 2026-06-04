@@ -6,7 +6,7 @@
         <span class="material-symbols-outlined" style="fontVariationSettings: &quot;'FILL' 1&quot;">auto_awesome</span>
         <h2 class="font-headline-sm">Why you match</h2>
       </div>
-      <p class="font-body-md text-body-md text-on-primary-container/90 mb-lg">
+      <p class="text-base text-on-primary-container/90 mb-lg leading-relaxed">
         Based on your uploaded resume, you have a <strong>{{ score }}%</strong> compatibility score for this role.
       </p>
       <div class="flex flex-wrap gap-sm">

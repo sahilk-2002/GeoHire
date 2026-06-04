@@ -13,7 +13,7 @@
     <main class="max-w-5xl mx-auto px-container-margin lg:px-8 pt-4 lg:pt-8">
       <section class="mt-xl lg:mt-12 text-center lg:text-left">
         <h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-background mb-sm">Ready for Your Next Move?</h1>
-        <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto lg:mx-0">Upload your resume to see matching jobs and get personalized career insights.</p>
+        <p class="text-base text-on-surface-variant max-w-2xl mx-auto lg:mx-0 leading-relaxed">Upload your resume to see matching jobs and get personalized career insights.</p>
       </section>
 
       <section class="mt-xl lg:mt-12 lg:flex lg:gap-8 lg:items-start">
@@ -49,6 +49,11 @@
           <div v-if="resumeStore.uploading" class="mt-md text-center text-on-surface-variant">
             <span class="material-symbols-outlined animate-spin inline-block mr-2">progress_activity</span>
             Parsing your resume...
+          </div>
+
+          <div v-if="resumeStore.uploadError" class="mt-md p-md bg-error-container text-on-error-container rounded-xl text-sm">
+            <span class="material-symbols-outlined text-sm inline-block mr-1 align-middle">error</span>
+            {{ resumeStore.uploadError }}
           </div>
 
           <div v-if="resumeStore.profile" class="mt-md p-md bg-surface-container-lowest border border-outline-variant rounded-xl">
@@ -130,8 +135,9 @@ const resumeStore = useResumeStore()
 const isDragging = ref(false)
 const input = ref(null)
 
-async function handleFile(file) {
-  if (file) await resumeStore.uploadResume(file)
+async function handleFile(e) {
+  const file = e?.target?.files?.[0] || e
+  if (file instanceof File) await resumeStore.uploadResume(file)
 }
 
 function handleDrop(e) {

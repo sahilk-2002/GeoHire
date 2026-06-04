@@ -67,8 +67,11 @@ def scrape_indeed(
 
     time.sleep(random.uniform(2, 6))
 
-    client = client or httpx.Client()
-    response = client.get(url, headers=headers, follow_redirects=True, timeout=30)
+    if client is None:
+        with httpx.Client() as client:
+            response = client.get(url, headers=headers, follow_redirects=True, timeout=30)
+    else:
+        response = client.get(url, headers=headers, follow_redirects=True, timeout=30)
     response.raise_for_status()
 
     soup = BeautifulSoup(response.text, "lxml")

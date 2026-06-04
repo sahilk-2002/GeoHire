@@ -69,5 +69,5 @@ export const useResumeStore = defineStore('resume', () => {
     error.value = ''
   }
 
-  return { resumeId, profile, uploading, uploadError, uploadResume, updateProfile, clear }
+  return { resumeId, profile, uploading, uploadError: error, uploadResume, updateProfile, clear }
 })

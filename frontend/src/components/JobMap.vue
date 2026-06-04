@@ -37,7 +37,6 @@ let startLatLng = null
 let tempRect = null
 let drawListeners = []
 let routeGroup = null
-let homeMarker = null
 
 const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -62,15 +61,6 @@ function onMapReady(map) {
   leafletMap.on('mouseup', onMouseUp)
   drawListeners = [leafletMap]
   routeGroup = L.layerGroup().addTo(leafletMap)
-  homeMarker = L.marker([0, 0], {
-    icon: L.divIcon({
-      html: '<span class="material-symbols-outlined text-3xl" style="color:#dc2626;filter:drop-shadow(0 0 4px rgba(0,0,0,0.5))">home_pin</span>',
-      className: '',
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-    }),
-    interactive: false,
-  })
 }
 
 onUnmounted(() => {

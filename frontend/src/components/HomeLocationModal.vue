@@ -5,10 +5,10 @@
         <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Set Your Home Location</h2>
         <p class="text-sm text-on-surface-variant mt-1">Click on the map to drop a red pin at your home. This helps us calculate commute routes to jobs.</p>
       </div>
-      <div class="flex-1 min-h-[300px] relative">
+      <div class="relative bg-surface-container-low rounded-lg overflow-hidden mx-5" style="height: 300px;">
         <l-map ref="mapRef" :zoom="4" :center="center" :useGlobalLeaflet="false" :options="mapOptions"
           @ready="onMapReady"
-          style="height: 350px; width: 100%;">
+          style="height: 100%; width: 100%;">
           <l-tile-layer :url="tileUrl" :attribution="attribution" />
           <l-marker v-if="selectedLat != null" :lat-lng="[selectedLat, selectedLng]"
             :icon="homeIcon" />
